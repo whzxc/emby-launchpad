@@ -18,7 +18,8 @@ export const EmbyService = {
     }
 
     const queryId = `tmdb.${tmdbId}`;
-    const url = `${CONFIG.emby.server}/emby/Items?Recursive=true&AnyProviderIdEquals=${queryId}&api_key=${CONFIG.emby.apiKey}`;
+    const fields = 'MediaSources,Path,Overview,CommunityRating,OfficialRating,RecursiveItemCount,ChildCount,MediaStreams';
+    const url = `${CONFIG.emby.server}/emby/Items?Recursive=true&AnyProviderIdEquals=${queryId}&Fields=${fields}&api_key=${CONFIG.emby.apiKey}`;
     try {
       const data = await Utils.getJSON(url);
       const item = (data.Items && data.Items.length > 0) ? data.Items[0] : null;

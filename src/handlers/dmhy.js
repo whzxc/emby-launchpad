@@ -56,14 +56,19 @@ export class DmhyListHandler {
       processLog.push({ time: new Date().toLocaleTimeString(), step, data });
     };
 
-    log('Original Title', rawTitle);
-
+    // Step 1: 解析标题
     const parsed = this.parseTitle(rawTitle);
-    log('Title Parsed', parsed);
+    log('【解析标题】', {
+      'Original Title': rawTitle,
+      'Parsed Title': parsed.title,
+      'Group': parsed.group,
+      'Resolution': parsed.res,
+      'Format': parsed.fmt,
+      'Subtitle': parsed.sub
+    });
 
     const cleanTitle = parsed.title;
 
-    // Add loading/status indicator (The Shared Dot)
     // Add loading/status indicator (The Shared Dot)
     // DMHY typically has no poster in list, so we pass titleElement only.
     // 'auto' mode will default to 'title_left'.
@@ -109,48 +114,48 @@ export class DmhyListHandler {
       let searchTitle = cleanTitle;
       let mediaType = 'tv'; // Default type
 
-      // Step 0: Optimize with Bangumi
+      // Step 2: Bangumi
       if (CONFIG.bangumi.token) {
-        log('API Request [Bangumi]', {
+        const bgmUrl = 'https://api.bgm.tv/v0/search/subjects';
+        // Placeholder for response to be filled later
+        let bgmData = {
           method: 'POST',
-          url: 'https://api.bgm.tv/v0/search/subjects',
-          body: { keyword: cleanTitle, filter: { type: [2] } }
-        });
+          url: bgmUrl,
+          body: { keyword: cleanTitle, filter: { type: [2] } },
+          response: null
+        };
 
         const bgmSubject = await BangumiService.search(cleanTitle);
+        bgmData.response = bgmSubject || 'No Result';
+
+        log('【请求API: Bangumi】', bgmData);
+
         if (bgmSubject) {
-          log('API Response [Bangumi]', bgmSubject);
-
           searchTitle = bgmSubject.name_cn || bgmSubject.name;
-
           // Detect Media Type (Movie vs TV)
           if (bgmSubject.eps === 1) {
             mediaType = 'movie';
-            log('Strategy', `Bangumi eps=1, switching TMDB search to 'movie'`);
-          } else {
-            log('Strategy', `Bangumi eps=${bgmSubject.eps}, keeping TMDB search as 'tv'`);
           }
-
-          log('Query Optimized', `${cleanTitle} -> ${searchTitle}`);
-        } else {
-          log('API Response [Bangumi]', 'No result found');
         }
       } else {
-        log('Skipped', 'Bangumi token not configured');
+        // Skip Bangumi log if token missing? Or log skipped?
+        // User implementation request implies showing it. 
+        // But if token is missing we don't request. 
       }
 
-      // Step 1: Search TMDB
-      log('API Request [TMDB]', {
+      // Step 3: TMDB
+      const tmdbUrl = `${CONFIG.tmdb.baseUrl}/search/multi`;
+      let tmdbData = {
         method: 'GET',
-        url: `${CONFIG.tmdb.baseUrl}/search/multi`,
-        params: { query: searchTitle, type: mediaType } // slightly inaccurate params log but okay
-      });
+        url: tmdbUrl,
+        body: { query: searchTitle, type: mediaType }, // logging params as body for readability
+        response: null
+      };
 
-      // Pass mediaType to search
       const results = await TmdbService.search(searchTitle, '', mediaType);
-      log('API Response [TMDB]', { count: results.length, top_result: results[0] || null });
+      tmdbData.response = { count: results.length, top_result: results[0] || null };
 
-      if (results.length > 0) log('TMDB Top Match', results[0]);
+      log('【请求API: TMDB】', tmdbData);
 
       let found = false;
       let embyItem = null;
@@ -158,15 +163,19 @@ export class DmhyListHandler {
       if (results.length > 0) {
         const bestMatch = results[0];
 
-        // Check Emby
-        log('API Request [Emby]', {
+        // Step 4: Emby
+        const embyUrl = `${CONFIG.emby.server}/emby/Items`;
+        let embyData = {
           method: 'GET',
-          url: `${CONFIG.emby.server}/emby/Items`,
-          params: { ProviderId: `tmdb.${bestMatch.id}` }
-        });
+          url: embyUrl,
+          body: { ProviderId: `tmdb.${bestMatch.id}` },
+          response: null
+        };
 
         embyItem = await EmbyService.checkExistence(bestMatch.id);
-        log('API Response [Emby]', embyItem || 'Not Found');
+        embyData.response = embyItem ? `Found: ${embyItem.Name} (ID: ${embyItem.Id})` : 'Not Found';
+
+        log('【请求API: Emby】', embyData);
 
         if (embyItem) {
           found = true;
@@ -178,6 +187,8 @@ export class DmhyListHandler {
             UI.showDetailModal(cleanTitle, processLog, embyItem, [cleanTitle, searchTitle]);
           };
         }
+      } else {
+        log('【请求API: Emby】', { message: 'Skipped (No TMDB Result)' });
       }
 
       if (!found) {

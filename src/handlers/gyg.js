@@ -131,13 +131,48 @@ export class GYGHandler {
     const dot = UI.createDot({ posterContainer: container, titleElement: titleEl });
     dot.style.zIndex = '20';
 
-    const processLog = [{ time: new Date().toLocaleTimeString(), step: 'Init', data: `Title: ${title}, Year: ${year}` }];
+    const processLog = [];
+    const log = (step, data) => {
+      processLog.push({ time: new Date().toLocaleTimeString(), step, data });
+    };
+
+    // Step 1: 解析标题
+    log('【解析标题】', {
+      'Original Title': title,
+      'Year': year,
+      'Parsed Title': title // GYG titles are usually clean
+    });
 
     try {
+      // Step 2: TMDB
+      const tmdbUrl = `${CONFIG.tmdb.baseUrl}/search/multi`;
+      let tmdbData = {
+        method: 'GET',
+        url: tmdbUrl,
+        body: { query: title, year: year },
+        response: null
+      };
+
       const results = await TmdbService.search(title, year);
+      tmdbData.response = { count: results.length, top_result: results[0] || null };
+      log('【请求API: TMDB】', tmdbData);
+
       if (results.length > 0) {
         const bestMatch = results[0];
+
+        // Step 3: Emby
+        const embyUrl = `${CONFIG.emby.server}/emby/Items`;
+        let embyData = {
+          method: 'GET',
+          url: embyUrl,
+          body: { ProviderId: `tmdb.${bestMatch.id}` },
+          response: null
+        };
+
         const embyItem = await EmbyService.checkExistence(bestMatch.id);
+        embyData.response = embyItem ? `Found: ${embyItem.Name} (ID: ${embyItem.Id})` : 'Not Found';
+        log('【请求API: Emby】', embyData);
+
         if (embyItem) {
           dot.className = 'us-dot found';
           dot.title = `Found in Emby: ${embyItem.Name}`;
@@ -154,6 +189,7 @@ export class GYGHandler {
           };
         }
       } else {
+        log('【请求API: Emby】', { message: 'Skipped (No TMDB Result)' });
         dot.className = 'us-dot not-found';
         dot.title = 'TMDB Not Found';
         dot.onclick = (e) => {
@@ -164,6 +200,11 @@ export class GYGHandler {
     } catch (e) {
       console.error(e);
       dot.className = 'us-dot error';
+      log('Error', e.toString());
+      dot.onclick = (e) => {
+        e.preventDefault(); e.stopPropagation();
+        UI.showDetailModal(title, processLog, null, [title]);
+      };
     }
     dot.classList.remove('loading');
   }
@@ -235,10 +276,31 @@ export class GYGListHandler {
     dot.title = `Checking ${cleanTitle}...`;
 
     // Log for Modal
-    const processLog = [{ time: new Date().toLocaleTimeString(), step: 'Init', data: `Title: ${cleanTitle}, Year: ${yearParam}` }];
+    const processLog = [];
+    const log = (step, data) => {
+      processLog.push({ time: new Date().toLocaleTimeString(), step, data });
+    };
+
+    // Step 1: 解析标题
+    log('【解析标题】', {
+      'Original Title': rawTitle,
+      'Year': year,
+      'Cleaned Title': cleanTitle
+    });
 
     try {
+      // Step 2: TMDB
+      const tmdbUrl = `${CONFIG.tmdb.baseUrl}/search/multi`;
+      let tmdbData = {
+        method: 'GET',
+        url: tmdbUrl,
+        body: { query: cleanTitle, year: yearParam },
+        response: null
+      };
+
       const results = await TmdbService.search(cleanTitle, yearParam);
+      tmdbData.response = { count: results.length, top_result: results[0] || null };
+      log('【请求API: TMDB】', tmdbData);
 
       let found = false;
       let embyItem = null;
@@ -246,7 +308,19 @@ export class GYGListHandler {
       if (results.length > 0) {
         // Try the first match
         const bestMatch = results[0];
+
+        // Step 3: Emby
+        const embyUrl = `${CONFIG.emby.server}/emby/Items`;
+        let embyData = {
+          method: 'GET',
+          url: embyUrl,
+          body: { ProviderId: `tmdb.${bestMatch.id}` },
+          response: null
+        };
+
         embyItem = await EmbyService.checkExistence(bestMatch.id);
+        embyData.response = embyItem ? `Found: ${embyItem.Name} (ID: ${embyItem.Id})` : 'Not Found';
+        log('【请求API: Emby】', embyData);
 
         if (embyItem) {
           found = true;
@@ -257,6 +331,8 @@ export class GYGListHandler {
             UI.showDetailModal(cleanTitle, processLog, embyItem, [cleanTitle]);
           };
         }
+      } else {
+        log('【请求API: Emby】', { message: 'Skipped (No TMDB Result)' });
       }
 
       if (!found) {
@@ -273,7 +349,12 @@ export class GYGListHandler {
     } catch (e) {
       console.error('GYG Check Error:', e);
       dot.className = 'us-dot error';
+      log('Error', e.toString());
       dot.classList.remove('loading');
+      dot.onclick = (e) => {
+        e.preventDefault(); e.stopPropagation();
+        UI.showDetailModal(cleanTitle, processLog, null, [cleanTitle]);
+      };
     }
   }
 }
