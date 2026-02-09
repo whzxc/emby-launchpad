@@ -12,14 +12,21 @@ export const EmbyService = {
         const parsed = JSON.parse(raw);
         if (Date.now() < parsed.expire) {
           // Utils.log(`Cache Hit Emby: ${tmdbId}`);
-          return parsed.value;
+          return { data: parsed.value, meta: { cached: true, note: 'From Local Cache' } };
         }
       } catch (e) { }
     }
 
     const queryId = `tmdb.${tmdbId}`;
     const fields = 'MediaSources,Path,Overview,CommunityRating,OfficialRating,RecursiveItemCount,ChildCount,MediaStreams';
+    // Use encodeURIComponent for params if needed, but here simple ids are safe enough mostly
     const url = `${CONFIG.emby.server}/emby/Items?Recursive=true&AnyProviderIdEquals=${queryId}&Fields=${fields}&api_key=${CONFIG.emby.apiKey}`;
+
+    const meta = {
+      method: 'GET',
+      url: url
+    };
+
     try {
       const data = await Utils.getJSON(url);
       const item = (data.Items && data.Items.length > 0) ? data.Items[0] : null;
@@ -28,10 +35,10 @@ export const EmbyService = {
       const ttl = item ? 1440 : 60;
       Cache.set(cacheKey, item, ttl);
 
-      return item;
+      return { data: item, meta };
     } catch (e) {
       console.error('Emby Check Error:', e);
-      return null;
+      return { data: null, meta, error: e };
     }
   }
 };

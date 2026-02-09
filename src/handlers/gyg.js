@@ -145,33 +145,26 @@ export class GYGHandler {
 
     try {
       // Step 2: TMDB
-      const tmdbUrl = `${CONFIG.tmdb.baseUrl}/search/multi`;
-      let tmdbData = {
-        method: 'GET',
-        url: tmdbUrl,
-        body: { query: title, year: year },
-        response: null
-      };
+      const tmdbResult = await TmdbService.search(title, year);
 
-      const results = await TmdbService.search(title, year);
-      tmdbData.response = { count: results.length, top_result: results[0] || null };
-      log('【请求API: TMDB】', tmdbData);
+      let tmdbLog = { ...tmdbResult.meta, response: { count: tmdbResult.data.length, top_result: tmdbResult.data[0] || null } };
+      if (tmdbResult.error) tmdbLog.response = { error: tmdbResult.error };
+
+      log('【请求API: TMDB】', tmdbLog);
+
+      const results = tmdbResult.data;
 
       if (results.length > 0) {
         const bestMatch = results[0];
 
         // Step 3: Emby
-        const embyUrl = `${CONFIG.emby.server}/emby/Items`;
-        let embyData = {
-          method: 'GET',
-          url: embyUrl,
-          body: { ProviderId: `tmdb.${bestMatch.id}` },
-          response: null
-        };
+        const embyResult = await EmbyService.checkExistence(bestMatch.id);
+        const embyItem = embyResult.data;
 
-        const embyItem = await EmbyService.checkExistence(bestMatch.id);
-        embyData.response = embyItem ? `Found: ${embyItem.Name} (ID: ${embyItem.Id})` : 'Not Found';
-        log('【请求API: Emby】', embyData);
+        let embyLog = { ...embyResult.meta, response: embyItem ? `Found: ${embyItem.Name} (ID: ${embyItem.Id})` : 'Not Found' };
+        if (embyResult.error) embyLog.response = { error: embyResult.error };
+
+        log('【请求API: Emby】', embyLog);
 
         if (embyItem) {
           dot.className = 'us-dot found';
@@ -290,17 +283,14 @@ export class GYGListHandler {
 
     try {
       // Step 2: TMDB
-      const tmdbUrl = `${CONFIG.tmdb.baseUrl}/search/multi`;
-      let tmdbData = {
-        method: 'GET',
-        url: tmdbUrl,
-        body: { query: cleanTitle, year: yearParam },
-        response: null
-      };
+      const tmdbResult = await TmdbService.search(cleanTitle, yearParam);
 
-      const results = await TmdbService.search(cleanTitle, yearParam);
-      tmdbData.response = { count: results.length, top_result: results[0] || null };
-      log('【请求API: TMDB】', tmdbData);
+      let tmdbLog = { ...tmdbResult.meta, response: { count: tmdbResult.data.length, top_result: tmdbResult.data[0] || null } };
+      if (tmdbResult.error) tmdbLog.response = { error: tmdbResult.error };
+
+      log('【请求API: TMDB】', tmdbLog);
+
+      const results = tmdbResult.data;
 
       let found = false;
       let embyItem = null;
@@ -310,17 +300,13 @@ export class GYGListHandler {
         const bestMatch = results[0];
 
         // Step 3: Emby
-        const embyUrl = `${CONFIG.emby.server}/emby/Items`;
-        let embyData = {
-          method: 'GET',
-          url: embyUrl,
-          body: { ProviderId: `tmdb.${bestMatch.id}` },
-          response: null
-        };
+        const embyResult = await EmbyService.checkExistence(bestMatch.id);
+        embyItem = embyResult.data;
 
-        embyItem = await EmbyService.checkExistence(bestMatch.id);
-        embyData.response = embyItem ? `Found: ${embyItem.Name} (ID: ${embyItem.Id})` : 'Not Found';
-        log('【请求API: Emby】', embyData);
+        let embyLog = { ...embyResult.meta, response: embyItem ? `Found: ${embyItem.Name} (ID: ${embyItem.Id})` : 'Not Found' };
+        if (embyResult.error) embyLog.response = { error: embyResult.error };
+
+        log('【请求API: Emby】', embyLog);
 
         if (embyItem) {
           found = true;

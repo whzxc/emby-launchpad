@@ -220,6 +220,40 @@ export const UI = {
   },
 
   /**
+   * Show a modal with large text content.
+   * @param {String} title 
+   * @param {String} content 
+   */
+  showTextModal(title, content) {
+    const id = 'us-text-modal';
+    const existing = document.getElementById(id);
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = id;
+    overlay.className = 'us-modal-overlay';
+    overlay.style.zIndex = '10001'; // Above detail modal
+
+    overlay.onclick = (e) => {
+      if (e.target === overlay) overlay.remove();
+    };
+
+    const html = `
+        <div class="us-modal" style="width: 600px; max-width: 95%;">
+            <div class="us-modal-header">
+                <div class="us-modal-title">${title}</div>
+                <div class="us-modal-close" onclick="document.getElementById('${id}').remove()">&times;</div>
+            </div>
+            <div class="us-modal-body" style="padding: 15px;">
+                <textarea style="width:100%; height:400px; font-family:monospace; font-size:12px; border:1px solid #ddd; padding:10px; resize:vertical;" readonly>${content}</textarea>
+            </div>
+        </div>
+        `;
+    overlay.innerHTML = html;
+    document.body.appendChild(overlay);
+  },
+
+  /**
    * Show the Detail Modal.
    * @param {String} title
    * @param {Array} logs - Step logs [{time, step, data}]
@@ -253,19 +287,57 @@ export const UI = {
 
       // Tech Info
       let techInfo = [];
+      let streamInfo = [];
+
       if (embyItem.MediaSources && embyItem.MediaSources.length > 0) {
         const source = embyItem.MediaSources[0];
         const sizeBytes = source.Size;
         const sizeGB = (sizeBytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
         const container = source.Container || '';
-        const video = (source.MediaStreams || []).find(s => s.Type === 'Video');
-        const resolution = video ? (video.Width + 'x' + video.Height) : '';
-        const codec = video ? (video.Codec || '').toUpperCase() : '';
 
         techInfo.push(sizeGB);
         if (container) techInfo.push(container.toUpperCase());
-        if (resolution) techInfo.push(resolution);
-        if (codec) techInfo.push(codec);
+
+        // Streams
+        if (source.MediaStreams) {
+          const video = source.MediaStreams.find(s => s.Type === 'Video');
+          const audios = source.MediaStreams.filter(s => s.Type === 'Audio');
+          const subs = source.MediaStreams.filter(s => s.Type === 'Subtitle');
+
+          if (video) {
+            const resolution = (video.Width && video.Height) ? `${video.Width}x${video.Height}` : '';
+            const codec = (video.Codec || '').toUpperCase();
+            const bitrate = video.BitRate ? (video.BitRate / 1000000).toFixed(1) + ' Mbps' : '';
+            const bitDepth = video.BitDepth ? `${video.BitDepth}bit` : '';
+
+            let vInfo = [];
+            if (resolution) vInfo.push(resolution);
+            if (codec) vInfo.push(codec);
+            if (bitrate) vInfo.push(bitrate);
+            if (bitDepth) vInfo.push(bitDepth);
+            if (vInfo.length) techInfo = [...techInfo, ...vInfo];
+          }
+
+          if (audios.length > 0) {
+            const audioStr = audios.map(a => {
+              const lang = (a.Language || 'und').toUpperCase();
+              const codec = (a.Codec || '').toUpperCase();
+              const channels = a.Channels ? (a.Channels === 6 ? '5.1' : (a.Channels === 8 ? '7.1' : '2.0')) : '';
+              return `${lang} ${codec} ${channels}`.trim();
+            }).join(' / ');
+            streamInfo.push(`🔊 ${audioStr}`);
+          }
+
+          if (subs.length > 0) {
+            const subStr = subs.map(s => {
+              const lang = (s.Language || 'und').toUpperCase();
+              const codec = (s.Codec || '').toUpperCase();
+              const forced = s.IsForced ? '[Forced]' : '';
+              return `${lang} ${codec}${forced}`.trim();
+            }).join(' / ');
+            streamInfo.push(`💬 ${subStr}`);
+          }
+        }
       }
 
       // Series Info
@@ -291,11 +363,12 @@ export const UI = {
                     </div>
                     ${seriesInfo}
                     <div style="font-size:12px; color:#555; margin-top:8px; line-height:1.4;">
-                        <strong>Path:</strong> <span style="font-family:monospace; background:#f1f1f1; padding:2px 4px; border-radius:3px;">${path}</span>
+                        <strong>Path:</strong> <span style="font-family:monospace; background:#f1f1f1; padding:2px 4px; border-radius:3px; word-break:break-all;">${path}</span>
                     </div>
                     <div style="font-size:12px; color:#999; margin-top:6px;">
                         ${techInfo.join(' • ')}
                     </div>
+                    ${streamInfo.length > 0 ? `<div style="font-size:11px; color:#777; margin-top:6px; line-height:1.4;">${streamInfo.join('<br>')}</div>` : ''}
                     <div style="margin-top:12px;">
                         <a href="${CONFIG.emby.server}/web/index.html#!/item?id=${embyItem.Id}&serverId=${embyItem.ServerId}" target="_blank" class="us-btn us-btn-primary">▶ Play on Emby</a>
                     </div>
@@ -306,7 +379,6 @@ export const UI = {
 
     // --- Log Timeline HTML ---
     const stepsHtml = logs.map((l, index) => {
-      const isLast = index === logs.length - 1;
       const statusClass = (l.step.includes('Error') || l.status === 'error') ? 'error' : 'done'; // Basic heuristic
 
       let detailHtml = '';
@@ -319,11 +391,12 @@ export const UI = {
           // For arrays, maybe join them or just JSON dump
           return `<div class="us-json-view">${JSON.stringify(data, null, 2)}</div>`;
         }
-        // Object: specialized rendering for request/response?
-        // Or just key-value pairs
+
+        // Object: specialized rendering depending on structure
         let html = '<div style="margin-top:6px;">';
         for (const [key, val] of Object.entries(data)) {
           if (val === null || val === undefined) continue;
+          // Skip 'response' if handled separately, but here we process general objects
           html += `<div style="font-size:12px; margin-bottom:2px;">
                         <span style="color:#888;">${key}:</span> 
                         <span style="color:#333; font-family:monospace;">${typeof val === 'object' ? JSON.stringify(val) : val}</span>
@@ -334,36 +407,50 @@ export const UI = {
       };
 
       // Heuristic for structured log data (from new handler logic)
-      // Expecting data to be { collapsed: boolean, content: ... } or just raw content
-      // or specific fields like "Original Title", "Parsed", etc.
-
-      // If data has 'url' and 'response', render as API call
-      if (l.data && (l.data.url || l.data.method)) {
-        const method = l.data.method || 'GET';
-        const url = l.data.url || '';
-        const body = l.data.body ? JSON.stringify(l.data.body) : '';
+      // If data has 'meta' (url/method) and 'response'
+      if (l.data && l.data.meta) {
+        const meta = l.data.meta;
         const response = l.data.response;
+        const method = meta.method || 'GET';
+        const url = meta.url || '';
+        const body = meta.body ? JSON.stringify(meta.body) : '';
 
         detailHtml += `
                     <div style="font-family:monospace; font-size:11px; color:#01b4e4; margin-bottom:4px; word-break:break-all;">
-                        <span style="font-weight:bold;">${method}</span> ${url}
+                        <span style="font-weight:bold;">${method}</span> <a href="${url}" target="_blank" style="color:#01b4e4; text-decoration:none;">${url}</a>
                     </div>
                     ${body ? `<div style="font-family:monospace; font-size:11px; color:#666; margin-bottom:4px;">Body: ${body}</div>` : ''}
                  `;
 
         if (response) {
-          // Collapsible response
           const respStr = typeof response === 'string' ? response : JSON.stringify(response, null, 2);
-          const shortResp = respStr.length > 100 ? respStr.substring(0, 100) + '...' : respStr;
-          const isLong = respStr.length > 100;
+          // Truncate to ~5 lines logic: split by newlines, take 5, join.
+          const lines = respStr.split('\n');
+          const isLong = lines.length > 5 || respStr.length > 500; // Backup length check
+          const shortResp = lines.slice(0, 5).join('\n') + (isLong ? '\n...' : '');
+
+          // Store full content in a data attribute or global map? 
+          // Or just pass to showTextModal. 
+          // We need to escape single quotes for the function call.
+          const safeRespStr = respStr.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, '\\n');
 
           detailHtml += `
                         <div style="margin-top:4px; border-left:2px solid #ddd; padding-left:8px;">
                             <div style="font-size:11px; color:#28a745; font-weight:bold;">Response:</div>
-                            <div style="font-family:monospace; font-size:11px; color:#555; white-space:pre-wrap; word-break:break-all;">${isLong ? shortResp : respStr}</div>
-                            ${isLong ? `<div class="us-toggle-details" onclick="this.previousElementSibling.textContent = this.previousElementSibling.textContent.endsWith('...') ? '${respStr.replace(/'/g, "\\'")}' : '${shortResp.replace(/'/g, "\\'")}'">Toggle Full Response</div>` : ''}
+                            <div style="font-family:monospace; font-size:11px; color:#555; white-space:pre-wrap; word-break:break-all;">${shortResp}</div>
+                            ${isLong ? `<div class="us-toggle-details" id="us-resp-btn-${index}">Show Full Response</div>` : ''}
                         </div>
                      `;
+
+          // Defer binding the click event until after render? 
+          // No, let's use a workaround. We can't put massive strings in onclick attribute easily.
+          // We'll attach IDs and bind events after innerHTML set.
+          // But here we are building string. 
+          // Workaround: bind to window or use a temporary stash.
+          if (isLong) {
+            if (!window._us_log_stash) window._us_log_stash = {};
+            window._us_log_stash[index] = respStr;
+          }
         }
       } else {
         // Default render
@@ -386,12 +473,6 @@ export const UI = {
 
     // --- Search Links (Only if not found or explicit request) ---
     let actionsHtml = '';
-    if (!embyItem || searchQueries.length > 0) { // Actually always show search links if queries provided, even if found? Typically only if not found.
-      // But the user might want to search elsewhere even if found. 
-      // Logic in previous code: if (!isFound) show links.
-      // Let's stick to "If not found, show links".
-    }
-
     if (!embyItem) {
       searchQueries.forEach(q => {
         if (!q) return;
@@ -431,5 +512,15 @@ export const UI = {
     `;
 
     document.body.appendChild(overlay);
+
+    // Bind Stashed Logs
+    if (window._us_log_stash) {
+      Object.keys(window._us_log_stash).forEach(idx => {
+        const btn = document.getElementById(`us-resp-btn-${idx}`);
+        if (btn) {
+          btn.onclick = () => UI.showTextModal('Full Response', window._us_log_stash[idx]);
+        }
+      });
+    }
   }
 };

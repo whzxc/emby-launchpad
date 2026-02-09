@@ -10,10 +10,18 @@ export const TmdbService = {
     const cached = Cache.get(cacheKey);
     if (cached) {
       // Utils.log(`Cache Hit: ${cacheKey}`);
-      return cached;
+      return { data: cached, meta: { cached: true, note: 'From Local Cache' } };
     }
 
     const url = `${CONFIG.tmdb.baseUrl}/search/multi?api_key=${CONFIG.tmdb.apiKey}&query=${encodeURIComponent(query)}&language=zh-CN&include_adult=true`;
+
+    // Meta for logging
+    const meta = {
+      method: 'GET',
+      url: url,
+      headers: { 'Accept': 'application/json' }
+    };
+
     try {
       const data = await Utils.getJSON(url);
       let results = [];
@@ -40,10 +48,10 @@ export const TmdbService = {
       const ttl = results.length > 0 ? 1440 : 60;
       Cache.set(cacheKey, results, ttl);
 
-      return results;
+      return { data: results, meta };
     } catch (e) {
       console.error('TMDB Search Error:', e);
-      return [];
+      return { data: [], meta, error: e };
     }
   }
 };
