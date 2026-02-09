@@ -167,6 +167,7 @@ export class GYGHandler {
 
       if (results.length > 0) {
         const bestMatch = results[0];
+        const tmdbId = bestMatch.id;
 
         // Step 3: Emby
         const embyResult = await embyService.checkExistence(bestMatch.id);
@@ -185,14 +186,14 @@ export class GYGHandler {
           dot.title = `Found in Emby: ${embyItem.Name}`;
           dot.onclick = (e: MouseEvent): void => {
             e.preventDefault(); e.stopPropagation();
-            UI.showDetailModal(title, processLog, embyItem, [title]);
+            UI.showDetailModal(title, processLog, embyItem, [title], { id: tmdbId, mediaType: 'movie' });
           };
         } else {
           dot.className = 'us-dot not-found';
           dot.title = 'Not found in Emby';
           dot.onclick = (e: MouseEvent): void => {
             e.preventDefault(); e.stopPropagation();
-            UI.showDetailModal(title, processLog, null, [title]);
+            UI.showDetailModal(title, processLog, null, [title], { id: tmdbId, mediaType: 'movie' });
           };
         }
       } else {
@@ -313,8 +314,8 @@ export class GYGListHandler {
       let embyItem: EmbyItem | null = null;
 
       if (results.length > 0) {
-        // Try the first match
         const bestMatch = results[0];
+        const tmdbId = bestMatch.id;
 
         // Step 3: Emby
         const embyResult = await embyService.checkExistence(bestMatch.id);
@@ -334,7 +335,7 @@ export class GYGListHandler {
           dot.title = `Play ${embyItem.Name} on Emby`;
           dot.onclick = (e: MouseEvent): void => {
             e.preventDefault(); e.stopPropagation();
-            UI.showDetailModal(cleanTitle, processLog, embyItem, [cleanTitle]);
+            UI.showDetailModal(cleanTitle, processLog, embyItem, [cleanTitle], { id: tmdbId, mediaType: 'movie' });
           };
         }
       } else {

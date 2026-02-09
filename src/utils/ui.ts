@@ -1,6 +1,7 @@
 import { CONFIG } from '../core/api-config';
 import { Utils } from './index';
 import { EmbyItem } from '../services/emby';
+import { nullerService, Nuller115Item, NullerMagnetItem } from '../services/nuller';
 
 interface DotOptions {
   posterContainer?: HTMLElement;
@@ -145,6 +146,137 @@ export const UI = {
                 display: none; border: 1px solid #ddd;
             }
             .us-toggle-details { font-size: 11px; color: #01b4e4; cursor: pointer; margin-left: 5px; text-decoration: underline; }
+
+            /* NULLER RESOURCE STYLES */
+            .us-nuller-section {
+                padding: 15px 20px;
+                border-bottom: 1px solid #eee;
+                background: linear-gradient(135deg, #667eea0a 0%, #764ba20a 100%);
+            }
+            .us-nuller-header {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 12px;
+                font-weight: bold;
+                color: #333;
+            }
+            .us-nuller-badge {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 2px 8px;
+                border-radius: 10px;
+                font-size: 11px;
+            }
+            .us-nuller-loading {
+                text-align: center;
+                color: #999;
+                padding: 20px;
+            }
+            .us-nuller-empty {
+                text-align: center;
+                color: #999;
+                padding: 15px;
+                font-size: 13px;
+            }
+            .us-resource-list {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                max-height: 200px;
+                overflow-y: auto;
+            }
+            .us-resource-item {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 8px 12px;
+                background: white;
+                border-radius: 6px;
+                border: 1px solid #e0e0e0;
+                font-size: 12px;
+                transition: all 0.2s;
+            }
+            .us-resource-item:hover {
+                border-color: #667eea;
+                box-shadow: 0 2px 6px rgba(102, 126, 234, 0.15);
+            }
+            .us-resource-info {
+                flex: 1;
+                min-width: 0;
+            }
+            .us-resource-title {
+                font-weight: 500;
+                color: #333;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 280px;
+            }
+            .us-resource-meta {
+                display: flex;
+                gap: 8px;
+                margin-top: 3px;
+                color: #888;
+                font-size: 11px;
+            }
+            .us-resource-tag {
+                background: #f0f0f0;
+                padding: 1px 5px;
+                border-radius: 3px;
+            }
+            .us-resource-tag.zh-sub {
+                background: #e8f5e9;
+                color: #388e3c;
+            }
+            .us-resource-actions {
+                display: flex;
+                gap: 6px;
+            }
+            .us-resource-btn {
+                padding: 4px 10px;
+                border-radius: 4px;
+                border: none;
+                cursor: pointer;
+                font-size: 11px;
+                transition: all 0.2s;
+            }
+            .us-resource-btn.primary {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+            }
+            .us-resource-btn.primary:hover {
+                opacity: 0.9;
+            }
+            .us-resource-btn.secondary {
+                background: #f5f5f5;
+                color: #666;
+            }
+            .us-resource-btn.secondary:hover {
+                background: #e0e0e0;
+            }
+            .us-nuller-tabs {
+                display: flex;
+                gap: 10px;
+                margin-bottom: 12px;
+            }
+            .us-nuller-tab {
+                padding: 6px 12px;
+                border-radius: 15px;
+                background: #f0f0f0;
+                color: #666;
+                font-size: 12px;
+                cursor: pointer;
+                border: none;
+                transition: all 0.2s;
+            }
+            .us-nuller-tab.active {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+            }
+            .us-nuller-tab:hover:not(.active) {
+                background: #e0e0e0;
+            }
         `);
   },
 
@@ -272,7 +404,13 @@ export const UI = {
   /**
    * Show the Detail Modal.
    */
-  showDetailModal(title: string, logs: LogEntry[], embyItem: EmbyItem | null = null, searchQueries: string[] = []): void {
+  showDetailModal(
+    title: string,
+    logs: LogEntry[],
+    embyItem: EmbyItem | null = null,
+    searchQueries: string[] = [],
+    tmdbInfo?: { id: number; mediaType: 'movie' | 'tv' }
+  ): void {
     const id = 'us-detail-modal';
     const existing = document.getElementById(id);
     if (existing) existing.remove();
@@ -497,6 +635,20 @@ export const UI = {
             </div>
             
             <div class="us-modal-body">
+                <!-- Nuller Resources Section -->
+                ${tmdbInfo ? `
+                <div class="us-nuller-section" id="us-nuller-container">
+                    <div class="us-nuller-header">
+                        <span>🔗 网盘 & 磁力资源</span>
+                        <span class="us-nuller-badge">Nuller</span>
+                    </div>
+                    <div class="us-nuller-loading" id="us-nuller-loading">
+                        <span>正在搜索资源...</span>
+                    </div>
+                    <div id="us-nuller-content" style="display:none;"></div>
+                </div>
+                ` : ''}
+                
                 ${embyHtml}
                 
                 ${(!embyItem && searchQueries.length > 0) ? `
@@ -527,6 +679,107 @@ export const UI = {
           btn.onclick = () => UI.showTextModal('Full Response', window._us_log_stash![parseInt(idx)]);
         }
       });
+    }
+
+    // Load Nuller Resources Asynchronously
+    if (tmdbInfo) {
+      UI.loadNullerResources(tmdbInfo.id, tmdbInfo.mediaType);
+    }
+  },
+
+  /**
+   * Load and render Nuller resources
+   */
+  async loadNullerResources(tmdbId: number, mediaType: 'movie' | 'tv'): Promise<void> {
+    const loadingEl = document.getElementById('us-nuller-loading');
+    const contentEl = document.getElementById('us-nuller-content');
+
+    if (!loadingEl || !contentEl) return;
+
+    try {
+      const resources = await nullerService.getAllResources(tmdbId, mediaType);
+
+      loadingEl.style.display = 'none';
+      contentEl.style.display = 'block';
+
+      if (!resources.hasData) {
+        contentEl.innerHTML = '<div class="us-nuller-empty">暂无可用资源</div>';
+        return;
+      }
+
+      let html = '';
+
+      // 115 Resources
+      if (resources.items115.length > 0) {
+        html += `
+          <div style="margin-bottom:12px;">
+            <div style="font-size:12px; font-weight:bold; color:#666; margin-bottom:8px;">📁 115 网盘分享 (${resources.items115.length})</div>
+            <div class="us-resource-list">
+        `;
+
+        resources.items115.slice(0, 5).forEach((item: Nuller115Item) => {
+          const resolution = item.resolution ? `<span class="us-resource-tag">${item.resolution}</span>` : '';
+          const quality = item.quality ? `<span class="us-resource-tag">${item.quality}</span>` : '';
+          const seasons = item.season_list ? `<span class="us-resource-tag">${item.season_list.join(', ')}</span>` : '';
+
+          html += `
+            <div class="us-resource-item">
+              <div class="us-resource-info">
+                <div class="us-resource-title" title="${item.title}">${item.title}</div>
+                <div class="us-resource-meta">
+                  <span>${item.size}</span>
+                  ${resolution}${quality}${seasons}
+                </div>
+              </div>
+              <div class="us-resource-actions">
+                <a href="${item.share_link}" target="_blank" class="us-resource-btn primary">打开链接</a>
+              </div>
+            </div>
+          `;
+        });
+
+        html += '</div></div>';
+      }
+
+      // Magnet Resources
+      if (resources.magnets.length > 0) {
+        html += `
+          <div>
+            <div style="font-size:12px; font-weight:bold; color:#666; margin-bottom:8px;">🧲 磁力链接 (${resources.magnets.length})</div>
+            <div class="us-resource-list">
+        `;
+
+        resources.magnets.slice(0, 5).forEach((item: NullerMagnetItem, idx: number) => {
+          const resolution = item.resolution ? `<span class="us-resource-tag">${item.resolution}</span>` : '';
+          const source = item.source ? `<span class="us-resource-tag">${item.source}</span>` : '';
+          const zhSub = item.zh_sub ? '<span class="us-resource-tag zh-sub">中字</span>' : '';
+
+          html += `
+            <div class="us-resource-item">
+              <div class="us-resource-info">
+                <div class="us-resource-title" title="${item.name}">${item.name}</div>
+                <div class="us-resource-meta">
+                  <span>${item.size}</span>
+                  ${resolution}${source}${zhSub}
+                </div>
+              </div>
+              <div class="us-resource-actions">
+                <button class="us-resource-btn secondary" data-magnet="${item.magnet}" onclick="navigator.clipboard.writeText(this.dataset.magnet).then(()=>{this.textContent='已复制';setTimeout(()=>this.textContent='复制',1500)})">复制</button>
+              </div>
+            </div>
+          `;
+        });
+
+        html += '</div></div>';
+      }
+
+      contentEl.innerHTML = html;
+
+    } catch (error) {
+      console.error('[Nuller] Load error:', error);
+      loadingEl.style.display = 'none';
+      contentEl.style.display = 'block';
+      contentEl.innerHTML = '<div class="us-nuller-empty">加载资源失败</div>';
     }
   }
 };

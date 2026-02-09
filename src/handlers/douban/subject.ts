@@ -56,9 +56,11 @@ export class DoubanSubjectHandler {
 
       let found = false;
       let embyItem: EmbyItem | null = null;
+      let tmdbId: number | null = null;
 
       if (results.data.length > 0) {
         const bestMatch = results.data[0];
+        tmdbId = bestMatch.id;
         const embyResult = await embyService.checkExistence(bestMatch.id);
         embyItem = embyResult.data;
         if (embyItem) {
@@ -67,7 +69,7 @@ export class DoubanSubjectHandler {
           dot.title = `Found in Emby: ${embyItem.Name}`;
           dot.onclick = (e: MouseEvent): void => {
             e.preventDefault(); e.stopPropagation();
-            UI.showDetailModal(title, processLog, embyItem, [title]);
+            UI.showDetailModal(title, processLog, embyItem, [title], tmdbId ? { id: tmdbId, mediaType: 'movie' } : undefined);
           };
         }
       }
@@ -77,7 +79,7 @@ export class DoubanSubjectHandler {
         dot.title = 'Not found in Emby';
         dot.onclick = (e: MouseEvent): void => {
           e.preventDefault(); e.stopPropagation();
-          UI.showDetailModal(title, processLog, null, [title]);
+          UI.showDetailModal(title, processLog, null, [title], tmdbId ? { id: tmdbId, mediaType: 'movie' } : undefined);
         };
       }
 

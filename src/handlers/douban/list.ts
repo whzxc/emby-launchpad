@@ -177,9 +177,11 @@ export class DoubanListHandler {
 
       let found = false;
       let embyItem: EmbyItem | null = null;
+      let tmdbId: number | null = null;
 
       if (results.data.length > 0) {
         const bestMatch = results.data[0];
+        tmdbId = bestMatch.id;
         const embyResult = await embyService.checkExistence(bestMatch.id);
         embyItem = embyResult.data;
         if (embyItem) {
@@ -188,7 +190,7 @@ export class DoubanListHandler {
           dot.title = `Found in Emby: ${embyItem.Name}`;
           dot.onclick = (e: MouseEvent): void => {
             e.preventDefault(); e.stopPropagation();
-            UI.showDetailModal(cleanTitle, processLog, embyItem, [cleanTitle]);
+            UI.showDetailModal(cleanTitle, processLog, embyItem, [cleanTitle], (tmdbId && mediaType) ? { id: tmdbId, mediaType } : undefined);
           };
         }
       }
@@ -198,7 +200,7 @@ export class DoubanListHandler {
         dot.title = 'Not found in Emby';
         dot.onclick = (e: MouseEvent): void => {
           e.preventDefault(); e.stopPropagation();
-          UI.showDetailModal(cleanTitle, processLog, null, [cleanTitle]);
+          UI.showDetailModal(cleanTitle, processLog, null, [cleanTitle], (tmdbId && mediaType) ? { id: tmdbId, mediaType } : undefined);
         };
       }
 

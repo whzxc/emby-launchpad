@@ -49,6 +49,14 @@ export class ApiConfig {
     cacheTTL: 10080 // 7天
   };
 
+  // Nuller 配置
+  readonly nuller: ServiceConfig = {
+    baseUrl: 'https://api.nullbr.eu.org',
+    appId: GM_getValue('nuller_app_id', ''),
+    apiKey: GM_getValue('nuller_api_key', ''),
+    cacheTTL: 10080 // 7天（有结果）
+  };
+
   // 状态配置
   readonly state: {
     dotPosition: 'auto' | 'poster_tl' | 'poster_tr' | 'poster_bl' | 'poster_br' | 'title_left' | 'title_right';

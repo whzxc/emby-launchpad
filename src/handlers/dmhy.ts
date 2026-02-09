@@ -171,9 +171,11 @@ export class DmhyListHandler {
       const results = tmdbResult.data;
       let found = false;
       let embyItem: EmbyItem | null = null;
+      let tmdbId: number | null = null;
 
       if (results.length > 0) {
         const bestMatch = results[0];
+        tmdbId = bestMatch.id;
 
         // Step 4: Emby
         const embyResult = await embyService.checkExistence(bestMatch.id);
@@ -196,7 +198,7 @@ export class DmhyListHandler {
           dot.onclick = (e: MouseEvent): void => {
             e.preventDefault();
             e.stopPropagation();
-            UI.showDetailModal(cleanTitle, processLog, embyItem, [cleanTitle, searchTitle]);
+            UI.showDetailModal(cleanTitle, processLog, embyItem, [cleanTitle, searchTitle], tmdbId ? { id: tmdbId, mediaType } : undefined);
           };
         }
       } else {
@@ -208,7 +210,7 @@ export class DmhyListHandler {
         dot.onclick = (e: MouseEvent): void => {
           e.preventDefault();
           e.stopPropagation();
-          UI.showDetailModal(cleanTitle, processLog, null, [cleanTitle, searchTitle]);
+          UI.showDetailModal(cleanTitle, processLog, null, [cleanTitle, searchTitle], tmdbId ? { id: tmdbId, mediaType } : undefined);
         };
       }
 
