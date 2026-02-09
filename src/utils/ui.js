@@ -76,18 +76,19 @@ export const UI = {
             .us-actions { padding: 20px; border-bottom: 1px solid #eee; text-align: center; }
             .us-status-icon { font-size: 40px; margin-bottom: 10px; display: block; }
             .us-status-text { font-size: 16px; font-weight: bold; margin-bottom: 15px; display: block; }
+            .us-actions-links { display: flex; gap: 10px; flex-wrap: wrap; }
             
             .us-btn {
-                display: inline-block; padding: 8px 16px; border-radius: 6px;
+                display: inline-block; padding: 4px 8px; border-radius: 6px;
                 text-decoration: none; font-size: 14px; font-weight: 500;
-                margin: 0 5px; cursor: pointer; border: none; transition: background 0.2s;
+                cursor: pointer; border: none; transition: background 0.2s;
             }
             .us-btn-primary { background: #52B54B; color: white; }
             .us-btn-primary:hover { background: #43943d; }
             .us-btn-outline { background: white; color: #333; border: 1px solid #ddd; }
             .us-btn-outline:hover { background: #f5f5f5; }
-            .us-btn-search { background: #eef9fd; color: #01b4e4; border: 1px solid #b3e5fc; }
-            .us-btn-search:hover { background: #e1f5fe; }
+            .us-btn-search { background: #eef9fd; color: #01b4e4; border: 1px solid #b3e5fc; text-decoration: none !important; }
+            .us-btn-search:hover { background: #e1f5fe; color: #008dba !important; text-decoration: none !important; }
 
             /* Stepper Logs */
             .us-log-container { padding: 15px 20px; background: #fafafa; }
@@ -294,6 +295,9 @@ export const UI = {
                 actionsHtml += `<a href="https://www.gyg.si/s/1---1/${encodeURIComponent(q)}" target="_blank" class="us-btn us-btn-search">Search GYG</a>`;
                 // BT4G
                 actionsHtml += `<a href="https://bt4gprx.com/search?orderby=size&p=1&q=${encodeURIComponent(q)}" target="_blank" class="us-btn us-btn-search">Search BT4G</a>`;
+                // DMHY
+                actionsHtml += `<a href="https://dmhy.org/topics/list?keyword=${encodeURIComponent(q)}&sort_id=2&team_id=0&order=date-desc" target="_blank" class="us-btn us-btn-search">DMHY 搜全集</a>`;
+                actionsHtml += `<a href="https://dmhy.org/topics/list?keyword=${encodeURIComponent(q)}&sort_id=0&team_id=0&order=date-desc" target="_blank" class="us-btn us-btn-search">DMHY 全部</a>`;
             });
         }
 
@@ -309,7 +313,7 @@ export const UI = {
                 <div class="us-actions">
                     <span class="us-status-icon">${statusIcon}</span>
                     <span class="us-status-text" style="color:${statusColor}">${statusText}</span>
-                    <div>${actionsHtml}</div>
+                    <div class="us-actions-links">${actionsHtml}</div>
                 </div>
                 
                 <div class="us-log-container">

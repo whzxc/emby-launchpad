@@ -1,6 +1,5 @@
 import { CONFIG } from '../config';
 import { Utils, Cache } from '../utils';
-import { GM_xmlhttpRequest } from '$';
 
 export const BangumiService = {
   search: async function (query) {
@@ -44,3 +43,4 @@ export const BangumiService = {
     return null;
   }
 };
+

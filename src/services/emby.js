@@ -1,6 +1,5 @@
 import { CONFIG } from '../config';
 import { Utils, Cache } from '../utils';
-import { GM_getValue } from '$';
 
 export const EmbyService = {
   checkExistence: async function (tmdbId) {
@@ -35,3 +34,4 @@ export const EmbyService = {
     }
   }
 };
+

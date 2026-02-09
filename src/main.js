@@ -5,7 +5,7 @@ import { GYGHandler, GYGListHandler } from './handlers/gyg';
 import { DoubanSubjectHandler } from './handlers/douban/subject';
 import { DoubanListHandler } from './handlers/douban/list';
 import { DmhyListHandler } from './handlers/dmhy';
-import { GM_registerMenuCommand } from '$';
+
 
 (function () {
   'use strict';

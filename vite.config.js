@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import monkey, { cdn } from 'vite-plugin-monkey';
+import pkg from './package.json';
 
 export default defineConfig({
   plugins: [
@@ -8,7 +9,7 @@ export default defineConfig({
       userscript: {
         name: 'Emby&豆瓣影视检索增强',
         namespace: 'http://tampermonkey.net/',
-        version: '1.2.0',
+        version: pkg.version,
         description: '在豆瓣(Douban)和GYG网页中自动检测Emby服务端库内是否存在当前影视，支持豆瓣详情页/列表页/排行榜/收藏页，以及GYG列表页/详情页。集成TMDB/IMDb评分，提供gyg.si/bt4gprx.com快捷搜索链接。支持缓存机制减少API请求。',
         author: 'leo',
         match: [
@@ -37,6 +38,7 @@ export default defineConfig({
           'GM_getResourceText'
         ],
       },
+      server: { mountGmApi: true },
     }),
   ],
 });

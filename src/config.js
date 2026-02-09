@@ -1,5 +1,3 @@
-import { GM_getValue, GM_setValue } from '$';
-
 export const CONFIG = {
   get tmdb() {
     return {
@@ -16,8 +14,10 @@ export const CONFIG = {
   gyg: {
     baseUrl: 'https://www.gyg.si'
   },
-  bangumi: {
-    token: GM_getValue('bangumi_token', '')
+  get bangumi() {
+    return {
+      token: GM_getValue('bangumi_token', '')
+    };
   },
   get state() {
     return {
@@ -25,3 +25,6 @@ export const CONFIG = {
     };
   }
 };
+
+
+

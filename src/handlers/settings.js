@@ -1,4 +1,3 @@
-import { GM_getValue, GM_setValue } from '$';
 import { Cache } from '../utils';
 
 export class SettingsHandler {
@@ -88,6 +87,7 @@ export class SettingsHandler {
     if (el) el.remove();
   }
 }
+
 
 export class CacheHandler {
   constructor() {

@@ -1,4 +1,3 @@
-import { GM_xmlhttpRequest, GM_addStyle, GM_setClipboard, GM_getValue, GM_setValue, GM_deleteValue, GM_listValues } from '$';
 
 export const Utils = {
   /**
@@ -109,3 +108,4 @@ export const Cache = {
     return count;
   }
 };
+
