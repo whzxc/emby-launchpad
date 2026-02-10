@@ -49,11 +49,11 @@ export class ApiConfig {
     cacheTTL: 10080 // 7天
   };
 
-  // Nuller 配置
-  readonly nuller: ServiceConfig = {
+  // Nullbr 配置
+  readonly nullbr: ServiceConfig = {
     baseUrl: 'https://api.nullbr.eu.org',
-    appId: GM_getValue('nuller_app_id', ''),
-    apiKey: GM_getValue('nuller_api_key', ''),
+    appId: GM_getValue('nullbr_app_id', process.env.NULLBR_APP_ID || ''),
+    apiKey: GM_getValue('nullbr_api_key', process.env.NULLBR_API_KEY || ''),
     cacheTTL: 10080 // 7天（有结果）
   };
 

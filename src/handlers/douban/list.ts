@@ -170,10 +170,22 @@ export class DoubanListHandler {
     });
     dot.title = `Checking ${cleanTitle}...`;
 
-    const processLog: LogEntry[] = [{ time: new Date().toLocaleTimeString(), step: 'Init', data: `Title: ${cleanTitle}, Year: ${useYear}, Type: ${mediaType}` }];
+    const processLog: LogEntry[] = [];
+    const log = (step: string, data: unknown): void => {
+      processLog.push({ time: new Date().toLocaleTimeString(), step, data });
+    };
+
+    log('【Init】', { Title: cleanTitle, Year: useYear, Type: mediaType });
 
     try {
       const results = await tmdbService.search(cleanTitle, useYear, mediaType);
+
+      const tmdbLog: { meta: typeof results.meta; response: unknown } = {
+        ...{ meta: results.meta },
+        response: { count: results.data.length, top_result: results.data[0] || null }
+      };
+      if (results.meta.error) tmdbLog.response = { error: results.meta.error };
+      log('【请求API: TMDB】', tmdbLog);
 
       let found = false;
       let embyItem: EmbyItem | null = null;
@@ -184,6 +196,14 @@ export class DoubanListHandler {
         tmdbId = bestMatch.id;
         const embyResult = await embyService.checkExistence(bestMatch.id);
         embyItem = embyResult.data;
+
+        const embyLog: { meta: typeof embyResult.meta; response: unknown } = {
+          ...{ meta: embyResult.meta },
+          response: embyItem ? embyItem : 'Not Found'
+        };
+        if (embyResult.meta.error) embyLog.response = { error: embyResult.meta.error };
+        log('【请求API: Emby】', embyLog);
+
         if (embyItem) {
           found = true;
           dot.className = 'us-dot found';
@@ -193,6 +213,8 @@ export class DoubanListHandler {
             UI.showDetailModal(cleanTitle, processLog, embyItem, [cleanTitle], (tmdbId && mediaType) ? { id: tmdbId, mediaType } : undefined);
           };
         }
+      } else {
+        log('【请求API: Emby】', { message: 'Skipped (No TMDB Result)' });
       }
 
       if (!found) {
@@ -209,7 +231,12 @@ export class DoubanListHandler {
     } catch (e) {
       console.error(e);
       dot.className = 'us-dot error';
+      log('Error', String(e));
       dot.classList.remove('loading');
+      dot.onclick = (e: MouseEvent): void => {
+        e.preventDefault(); e.stopPropagation();
+        UI.showDetailModal(cleanTitle, processLog, null, [cleanTitle]);
+      };
     }
   }
 }

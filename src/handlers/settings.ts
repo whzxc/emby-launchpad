@@ -32,6 +32,15 @@ export class SettingsHandler {
                     <label class="us-settings-label">Bangumi Token (Optional)</label>
                     <input type="text" id="us-bangumi-token" class="us-settings-input" value="${GM_getValue('bangumi_token', '')}" placeholder="For Anime Search Optimization">
                 </div>
+
+                <div class="us-settings-row">
+                    <label class="us-settings-label">Nullbr App ID</label>
+                    <input type="text" id="us-nullbr-appid" class="us-settings-input" value="${GM_getValue('nullbr_app_id', process.env.NULLBR_APP_ID || '')}" placeholder="Required for Nullbr search">
+                </div>
+                <div class="us-settings-row">
+                    <label class="us-settings-label">Nullbr API Key</label>
+                    <input type="text" id="us-nullbr-apikey" class="us-settings-input" value="${GM_getValue('nullbr_api_key', process.env.NULLBR_API_KEY || '')}" placeholder="Required for Nullbr search">
+                </div>
                 
                 <div class="us-settings-row">
                     <label>Dot Position (圆点位置)</label>
@@ -73,11 +82,15 @@ export class SettingsHandler {
     const embyServer = (document.getElementById('us-emby-server') as HTMLInputElement).value.trim().replace(/\/$/, '');
     const embyKey = (document.getElementById('us-emby-key') as HTMLInputElement).value.trim();
     const bangumiToken = (document.getElementById('us-bangumi-token') as HTMLInputElement).value.trim();
+    const nullbrAppId = (document.getElementById('us-nullbr-appid') as HTMLInputElement).value.trim();
+    const nullbrApiKey = (document.getElementById('us-nullbr-apikey') as HTMLInputElement).value.trim();
 
     GM_setValue('tmdb_api_key', tmdbKey);
     GM_setValue('emby_server', embyServer);
     GM_setValue('emby_api_key', embyKey);
     GM_setValue('bangumi_token', bangumiToken);
+    GM_setValue('nullbr_app_id', nullbrAppId);
+    GM_setValue('nullbr_api_key', nullbrApiKey);
 
     alert('Settings saved. Refreshing page...');
     this.close();

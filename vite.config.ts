@@ -9,6 +9,17 @@ export default defineConfig({
       include: ['src/**/*.ts'],
       exclude: ['src/**/*.spec.ts', 'src/**/*.test.ts']
     }),
+    {
+      name: 'inject-env-vars',
+      config() {
+        return {
+          define: {
+            'process.env.NULLBR_APP_ID': JSON.stringify(process.env.NULLBR_APP_ID),
+            'process.env.NULLBR_API_KEY': JSON.stringify(process.env.NULLBR_API_KEY),
+          }
+        }
+      }
+    },
     monkey({
       entry: 'src/main.ts',  // 暂时保持.js,稍后迁移
       userscript: {
@@ -28,7 +39,8 @@ export default defineConfig({
           'www.gyg.si',
           'www.imdb.com',
           'www.rottentomatoes.com',
-          'api.bgm.tv'
+          'api.bgm.tv',
+          'api.nullbr.eu.org'
         ],
         license: 'MIT',
         grant: [

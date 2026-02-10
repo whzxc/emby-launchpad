@@ -49,10 +49,22 @@ export class DoubanSubjectHandler {
     dot.style.zIndex = '10';
     dot.title = `Checking ${title}...`;
 
-    const processLog: LogEntry[] = [{ time: new Date().toLocaleTimeString(), step: 'Init', data: `Title: ${title}, Year: ${year}` }];
+    const processLog: LogEntry[] = [];
+    const log = (step: string, data: unknown): void => {
+      processLog.push({ time: new Date().toLocaleTimeString(), step, data });
+    };
+
+    log('【Init】', { Title: title, Year: year });
 
     try {
       const results = await tmdbService.search(title, year);
+
+      const tmdbLog: { meta: typeof results.meta; response: unknown } = {
+        ...{ meta: results.meta },
+        response: { count: results.data.length, top_result: results.data[0] || null }
+      };
+      if (results.meta.error) tmdbLog.response = { error: results.meta.error };
+      log('【请求API: TMDB】', tmdbLog);
 
       let found = false;
       let embyItem: EmbyItem | null = null;
@@ -63,6 +75,14 @@ export class DoubanSubjectHandler {
         tmdbId = bestMatch.id;
         const embyResult = await embyService.checkExistence(bestMatch.id);
         embyItem = embyResult.data;
+
+        const embyLog: { meta: typeof embyResult.meta; response: unknown } = {
+          ...{ meta: embyResult.meta },
+          response: embyItem ? embyItem : 'Not Found'
+        };
+        if (embyResult.meta.error) embyLog.response = { error: embyResult.meta.error };
+        log('【请求API: Emby】', embyLog);
+
         if (embyItem) {
           found = true;
           dot.className = 'us-dot found';
@@ -72,6 +92,8 @@ export class DoubanSubjectHandler {
             UI.showDetailModal(title, processLog, embyItem, [title], tmdbId ? { id: tmdbId, mediaType: 'movie' } : undefined);
           };
         }
+      } else {
+        log('【请求API: Emby】', { message: 'Skipped (No TMDB Result)' });
       }
 
       if (!found) {
@@ -88,6 +110,7 @@ export class DoubanSubjectHandler {
     } catch (e) {
       console.error(e);
       dot.className = 'us-dot error';
+      log('Error', String(e));
       dot.classList.remove('loading');
       dot.onclick = (e: MouseEvent): void => {
         e.preventDefault(); e.stopPropagation();

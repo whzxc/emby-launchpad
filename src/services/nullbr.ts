@@ -5,7 +5,7 @@ import { Utils } from '../utils';
 /**
  * 115 网盘分享资源
  */
-export interface Nuller115Item {
+export interface Nullbr115Item {
   title: string;
   size: string;
   share_link: string;
@@ -17,7 +17,7 @@ export interface Nuller115Item {
 /**
  * 磁力资源
  */
-export interface NullerMagnetItem {
+export interface NullbrMagnetItem {
   name: string;
   size: string;
   magnet: string;
@@ -30,8 +30,8 @@ export interface NullerMagnetItem {
 /**
  * 115 资源响应
  */
-export interface Nuller115Response {
-  '115': Nuller115Item[];
+export interface Nullbr115Response {
+  '115': Nullbr115Item[];
   id: number;
   page: number;
   total_page: number;
@@ -41,36 +41,36 @@ export interface Nuller115Response {
 /**
  * 磁力资源响应
  */
-export interface NullerMagnetResponse {
+export interface NullbrMagnetResponse {
   id: number;
   media_type: string;
   season_number?: number;
-  magnet: NullerMagnetItem[];
+  magnet: NullbrMagnetItem[];
 }
 
 /**
- * Nuller 资源汇总
+ * Nullbr 资源汇总
  */
-export interface NullerResources {
-  items115: Nuller115Item[];
-  magnets: NullerMagnetItem[];
+export interface NullbrResources {
+  items115: Nullbr115Item[];
+  magnets: NullbrMagnetItem[];
   hasData: boolean;
 }
 
 /**
- * Nuller API 服务
+ * Nullbr API 服务
  * 提供 115 网盘分享和磁力资源检索
  */
-class NullerService extends ApiClient {
+class NullbrService extends ApiClient {
   constructor() {
-    super('Nuller');
+    super('Nullbr');
   }
 
   /**
    * 检查配置是否有效
    */
   isConfigured(): boolean {
-    return !!(CONFIG.nuller.appId && CONFIG.nuller.apiKey);
+    return !!(CONFIG.nullbr.appId && CONFIG.nullbr.apiKey);
   }
 
   /**
@@ -78,28 +78,28 @@ class NullerService extends ApiClient {
    */
   private getHeaders(): Record<string, string> {
     return {
-      'X-APP-ID': CONFIG.nuller.appId || '',
-      'X-API-KEY': CONFIG.nuller.apiKey || ''
+      'X-APP-ID': CONFIG.nullbr.appId || '',
+      'X-API-KEY': CONFIG.nullbr.apiKey || ''
     };
   }
 
   /**
    * 获取 115 网盘分享资源
    */
-  async get115Resources(tmdbId: number, mediaType: 'movie' | 'tv'): Promise<ApiResponse<Nuller115Item[]>> {
+  async get115Resources(tmdbId: number, mediaType: 'movie' | 'tv'): Promise<ApiResponse<Nullbr115Item[]>> {
     if (!this.isConfigured()) {
       return {
         data: [],
-        meta: { error: 'Nuller API not configured', source: this.name, timestamp: new Date().toISOString() }
+        meta: { error: 'Nullbr API not configured', source: this.name, timestamp: new Date().toISOString() }
       };
     }
 
     const cacheKey = this.buildCacheKey('115', mediaType, tmdbId);
-    const url = `${CONFIG.nuller.baseUrl}/${mediaType}/${tmdbId}/115`;
+    const url = `${CONFIG.nullbr.baseUrl}/${mediaType}/${tmdbId}/115`;
 
-    return this.request<Nuller115Item[]>({
+    return this.request<Nullbr115Item[]>({
       requestFn: async () => {
-        Utils.log(`[Nuller] Fetching 115 resources: ${mediaType}/${tmdbId}`);
+        Utils.log(`[Nullbr] Fetching 115 resources: ${mediaType}/${tmdbId}`);
 
         const response = await new Promise<any>((resolve, reject) => {
           GM_xmlhttpRequest({
@@ -112,7 +112,7 @@ class NullerService extends ApiClient {
         });
 
         if (response.status === 200) {
-          const data: Nuller115Response = JSON.parse(response.responseText);
+          const data: Nullbr115Response = JSON.parse(response.responseText);
           return data['115'] || [];
         } else if (response.status === 404) {
           return []; // 未找到资源
@@ -121,7 +121,7 @@ class NullerService extends ApiClient {
         }
       },
       cacheKey,
-      cacheTTL: CONFIG.nuller.cacheTTL,
+      cacheTTL: CONFIG.nullbr.cacheTTL,
       useCache: true,
       useQueue: true
     });
@@ -130,11 +130,11 @@ class NullerService extends ApiClient {
   /**
    * 获取磁力资源
    */
-  async getMagnetResources(tmdbId: number, mediaType: 'movie' | 'tv', seasonNumber?: number): Promise<ApiResponse<NullerMagnetItem[]>> {
+  async getMagnetResources(tmdbId: number, mediaType: 'movie' | 'tv', seasonNumber?: number): Promise<ApiResponse<NullbrMagnetItem[]>> {
     if (!this.isConfigured()) {
       return {
         data: [],
-        meta: { error: 'Nuller API not configured', source: this.name, timestamp: new Date().toISOString() }
+        meta: { error: 'Nullbr API not configured', source: this.name, timestamp: new Date().toISOString() }
       };
     }
 
@@ -142,18 +142,18 @@ class NullerService extends ApiClient {
     let cacheKey: string;
 
     if (mediaType === 'movie') {
-      url = `${CONFIG.nuller.baseUrl}/movie/${tmdbId}/magnet`;
+      url = `${CONFIG.nullbr.baseUrl}/movie/${tmdbId}/magnet`;
       cacheKey = this.buildCacheKey('magnet', 'movie', tmdbId);
     } else {
       // TV: 默认获取第一季
       const season = seasonNumber || 1;
-      url = `${CONFIG.nuller.baseUrl}/tv/${tmdbId}/season/${season}/magnet`;
+      url = `${CONFIG.nullbr.baseUrl}/tv/${tmdbId}/season/${season}/magnet`;
       cacheKey = this.buildCacheKey('magnet', 'tv', tmdbId, season);
     }
 
-    return this.request<NullerMagnetItem[]>({
+    return this.request<NullbrMagnetItem[]>({
       requestFn: async () => {
-        Utils.log(`[Nuller] Fetching magnet resources: ${url}`);
+        Utils.log(`[Nullbr] Fetching magnet resources: ${url}`);
 
         const response = await new Promise<any>((resolve, reject) => {
           GM_xmlhttpRequest({
@@ -166,7 +166,7 @@ class NullerService extends ApiClient {
         });
 
         if (response.status === 200) {
-          const data: NullerMagnetResponse = JSON.parse(response.responseText);
+          const data: NullbrMagnetResponse = JSON.parse(response.responseText);
           return data.magnet || [];
         } else if (response.status === 404) {
           return []; // 未找到资源
@@ -175,7 +175,7 @@ class NullerService extends ApiClient {
         }
       },
       cacheKey,
-      cacheTTL: CONFIG.nuller.cacheTTL,
+      cacheTTL: CONFIG.nullbr.cacheTTL,
       useCache: true,
       useQueue: true
     });
@@ -184,7 +184,7 @@ class NullerService extends ApiClient {
   /**
    * 获取所有资源（115 + 磁力）
    */
-  async getAllResources(tmdbId: number, mediaType: 'movie' | 'tv'): Promise<NullerResources> {
+  async getAllResources(tmdbId: number, mediaType: 'movie' | 'tv'): Promise<NullbrResources> {
     const [res115, resMagnet] = await Promise.all([
       this.get115Resources(tmdbId, mediaType),
       this.getMagnetResources(tmdbId, mediaType)
@@ -213,4 +213,4 @@ class NullerService extends ApiClient {
 }
 
 // 导出单例实例
-export const nullerService = new NullerService();
+export const nullbrService = new NullbrService();

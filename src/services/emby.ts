@@ -19,6 +19,7 @@ export interface EmbyItem {
   Path?: string;
   ChildCount?: number;
   RecursiveItemCount?: number;
+  IndexNumber?: number;
   MediaSources?: Array<{
     Name?: string;
     Container?: string;
@@ -38,6 +39,7 @@ export interface EmbyItem {
       IsForced?: boolean;
     }>;
   }>;
+  Seasons?: EmbyItem[];
 }
 
 /**
@@ -65,20 +67,19 @@ export class EmbyService extends ApiClient {
       };
     }
 
+    const queryId = `tmdb.${tmdbId}`;
+    const params = new URLSearchParams({
+      Recursive: 'true',
+      AnyProviderIdEquals: queryId,
+      Fields: 'ProviderIds,MediaSources,MediaStreams,ProductionYear,ChildCount,RecursiveItemCount,Path,IndexNumber',
+      api_key: apiKey
+    });
+
+    const url = `${server}/emby/Items?${params.toString()}`;
     const cacheKey = this.buildCacheKey('check', tmdbId);
 
-    return this.request<EmbyItem | null>({
+    const result = await this.request<EmbyItem | null>({
       requestFn: async () => {
-        const queryId = `tmdb.${tmdbId}`;
-        const params = new URLSearchParams({
-          Recursive: 'true',
-          AnyProviderIdEquals: queryId,
-          Fields: 'ProviderIds,MediaSources,MediaStreams',
-          api_key: apiKey
-        });
-
-        const url = `${server}/emby/Items?${params.toString()}`;
-
         Utils.log(`[Emby] Checking TMDB ID: ${tmdbId}`);
 
         const data = await Utils.getJSON(url);
@@ -86,6 +87,73 @@ export class EmbyService extends ApiClient {
         if (data.Items && data.Items.length > 0) {
           const item: EmbyItem = data.Items[0];
           Utils.log(`[Emby] Found: ${item.Name}`);
+
+          // If Series, fetch seasons
+          if (item.Type === 'Series') {
+            try {
+              // 1. Fetch Seasons
+              const seasonParams = new URLSearchParams({
+                ParentId: item.Id,
+                IncludeItemTypes: 'Season',
+                Fields: 'ChildCount,RecursiveItemCount,Path,IndexNumber',
+                api_key: apiKey
+              });
+              const seasonUrl = `${server}/emby/Items?${seasonParams.toString()}`;
+              const seasonData = await Utils.getJSON(seasonUrl);
+
+              if (seasonData.Items && seasonData.Items.length > 0) {
+                item.Seasons = seasonData.Items;
+
+                // 2. Check for invalid counts (all 0)
+                const totalEpisodes = item.Seasons!.reduce((acc, s) => acc + (s.RecursiveItemCount || 0), 0);
+
+                if (totalEpisodes === 0) {
+                  Utils.log('[Emby] Season counts are 0, fetching all episodes to aggregate manually...');
+
+                  // 3. Fallback: Fetch ALL episodes
+                  const episodeParams = new URLSearchParams({
+                    ParentId: item.Id,
+                    IncludeItemTypes: 'Episode',
+                    Recursive: 'true',
+                    Fields: 'ParentIndexNumber', // Need season number
+                    api_key: apiKey
+                  });
+                  const allEpUrl = `${server}/emby/Items?${episodeParams.toString()}`;
+                  const allEpData = await Utils.getJSON(allEpUrl);
+
+                  if (allEpData.Items && allEpData.Items.length > 0) {
+                    // Aggregate by ParentIndexNumber (Season Number)
+                    const seasonMap: Record<number, number> = {};
+                    allEpData.Items.forEach((ep: any) => {
+                      const sParams = ep.ParentIndexNumber || 1; // Default to 1 if missing
+                      seasonMap[sParams] = (seasonMap[sParams] || 0) + 1;
+                    });
+
+                    // Update Seasons
+                    if (item.Seasons) {
+                      item.Seasons.forEach(s => {
+                        // NOTE: Emby Season Items usually have IndexNumber.
+                        // Use fallback logic if IndexNumber is missing: parse Name "Season 1" -> 1
+                        let ids = s.IndexNumber;
+                        if (ids === undefined) {
+                          const m = s.Name.match(/(\d+)/);
+                          if (m) ids = parseInt(m[1], 10);
+                        }
+
+                        if (ids !== undefined && seasonMap[ids]) {
+                          s.RecursiveItemCount = seasonMap[ids];
+                          s.ChildCount = seasonMap[ids];
+                        }
+                      });
+                    }
+                  }
+                }
+              }
+            } catch (e) {
+              Utils.log(`[Emby] Failed to fetch seasons/episodes: ${e}`);
+            }
+          }
+
           return item;
         }
 
@@ -93,11 +161,17 @@ export class EmbyService extends ApiClient {
         return null;
       },
       cacheKey,
-      cacheTTL: 1440, // 24小时
+      cacheTTL: 1440, // 24 hours
       useCache: true,
       useQueue: true,
-      priority: 3 // Emby 检查优先级较高
+      priority: 3
     });
+
+    if (result.meta) {
+      (result.meta as any).url = url;
+    }
+
+    return result;
   }
 
   /**

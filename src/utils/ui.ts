@@ -1,7 +1,7 @@
 import { CONFIG } from '../core/api-config';
 import { Utils } from './index';
 import { EmbyItem } from '../services/emby';
-import { nullerService, Nuller115Item, NullerMagnetItem } from '../services/nuller';
+import { nullbrService, Nullbr115Item, NullbrMagnetItem } from '../services/nullbr';
 
 interface DotOptions {
   posterContainer?: HTMLElement;
@@ -44,7 +44,7 @@ export const UI = {
             .us-dot:hover { transform: scale(1.15); }
             
             /* Loading: Blue Pulse */
-            .us-dot.loading {
+            .us-dot.dog-loading {
                 background-color: #01b4e4; /* TMDB Blue */
                 animation: us-pulse 1.5s infinite;
                 opacity: 0.8;
@@ -147,13 +147,13 @@ export const UI = {
             }
             .us-toggle-details { font-size: 11px; color: #01b4e4; cursor: pointer; margin-left: 5px; text-decoration: underline; }
 
-            /* NULLER RESOURCE STYLES */
-            .us-nuller-section {
+            /* Nullbr RESOURCE STYLES */
+            .us-nullbr-section {
                 padding: 15px 20px;
                 border-bottom: 1px solid #eee;
                 background: linear-gradient(135deg, #667eea0a 0%, #764ba20a 100%);
             }
-            .us-nuller-header {
+            .us-nullbr-header {
                 display: flex;
                 align-items: center;
                 gap: 8px;
@@ -161,19 +161,19 @@ export const UI = {
                 font-weight: bold;
                 color: #333;
             }
-            .us-nuller-badge {
+            .us-nullbr-badge {
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                 color: white;
                 padding: 2px 8px;
                 border-radius: 10px;
                 font-size: 11px;
             }
-            .us-nuller-loading {
+            .us-nullbr-loading {
                 text-align: center;
                 color: #999;
                 padding: 20px;
             }
-            .us-nuller-empty {
+            .us-nullbr-empty {
                 text-align: center;
                 color: #999;
                 padding: 15px;
@@ -255,12 +255,12 @@ export const UI = {
             .us-resource-btn.secondary:hover {
                 background: #e0e0e0;
             }
-            .us-nuller-tabs {
+            .us-nullbr-tabs {
                 display: flex;
                 gap: 10px;
                 margin-bottom: 12px;
             }
-            .us-nuller-tab {
+            .us-nullbr-tab {
                 padding: 6px 12px;
                 border-radius: 15px;
                 background: #f0f0f0;
@@ -270,11 +270,11 @@ export const UI = {
                 border: none;
                 transition: all 0.2s;
             }
-            .us-nuller-tab.active {
+            .us-nullbr-tab.active {
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                 color: white;
             }
-            .us-nuller-tab:hover:not(.active) {
+            .us-nullbr-tab:hover:not(.active) {
                 background: #e0e0e0;
             }
         `);
@@ -286,7 +286,7 @@ export const UI = {
   createDot(options: DotOptions = {}): HTMLDivElement {
     const { posterContainer, titleElement } = options;
     const dot = document.createElement('div');
-    dot.className = 'us-dot loading';
+    dot.className = 'us-dot dot-loading';
     dot.title = 'Initializing...';
 
     // Config: poster_tl, poster_tr, poster_bl, poster_br, title_left, title_right, auto
@@ -492,9 +492,18 @@ export const UI = {
       // Series Info
       let seriesInfo = '';
       if (embyItem.Type === 'Series') {
-        const seasonCount = embyItem.ChildCount || 0;
-        const episodeCount = embyItem.RecursiveItemCount || 0;
-        seriesInfo = `<div style="margin-top:5px; color:#52B54B; font-weight:bold;">${seasonCount} Seasons / ${episodeCount} Episodes</div>`;
+        if (embyItem.Seasons && embyItem.Seasons.length > 0) {
+          const seasonBadges = embyItem.Seasons.map(s => {
+            const sName = s.Name.replace('Season', 'S').replace('Specials', 'SP');
+            const epCount = s.ChildCount || s.RecursiveItemCount || 0;
+            return `<span style="background:#e8f5e9; color:#2e7d32; padding:2px 6px; border-radius:4px; font-size:11px; border:1px solid #c8e6c9;">${sName}: ${epCount}集</span>`;
+          }).join(' ');
+          seriesInfo = `<div style="margin-top:6px; display:flex; flex-wrap:wrap; gap:4px;">${seasonBadges}</div>`;
+        } else {
+          const seasonCount = embyItem.ChildCount || 0;
+          const episodeCount = embyItem.RecursiveItemCount || 0;
+          seriesInfo = `<div style="margin-top:5px; color:#52B54B; font-weight:bold;">${seasonCount} Seasons / ${episodeCount} Episodes</div>`;
+        }
       }
 
       embyHtml = `
@@ -635,17 +644,17 @@ export const UI = {
             </div>
             
             <div class="us-modal-body">
-                <!-- Nuller Resources Section -->
+                <!-- Nullbr Resources Section -->
                 ${tmdbInfo ? `
-                <div class="us-nuller-section" id="us-nuller-container">
-                    <div class="us-nuller-header">
+                <div class="us-nullbr-section" id="us-nullbr-container">
+                    <div class="us-nullbr-header">
                         <span>🔗 网盘 & 磁力资源</span>
-                        <span class="us-nuller-badge">Nuller</span>
+                        <span class="us-nullbr-badge">Nullbr</span>
                     </div>
-                    <div class="us-nuller-loading" id="us-nuller-loading">
+                    <div class="us-nullbr-loading" id="us-nullbr-loading">
                         <span>正在搜索资源...</span>
                     </div>
-                    <div id="us-nuller-content" style="display:none;"></div>
+                    <div id="us-nullbr-content" style="display:none;"></div>
                 </div>
                 ` : ''}
                 
@@ -681,29 +690,29 @@ export const UI = {
       });
     }
 
-    // Load Nuller Resources Asynchronously
+    // Load Nullbr Resources Asynchronously
     if (tmdbInfo) {
-      UI.loadNullerResources(tmdbInfo.id, tmdbInfo.mediaType);
+      UI.loadNullbrResources(tmdbInfo.id, tmdbInfo.mediaType);
     }
   },
 
   /**
-   * Load and render Nuller resources
+   * Load and render Nullbr resources
    */
-  async loadNullerResources(tmdbId: number, mediaType: 'movie' | 'tv'): Promise<void> {
-    const loadingEl = document.getElementById('us-nuller-loading');
-    const contentEl = document.getElementById('us-nuller-content');
+  async loadNullbrResources(tmdbId: number, mediaType: 'movie' | 'tv'): Promise<void> {
+    const loadingEl = document.getElementById('us-nullbr-loading');
+    const contentEl = document.getElementById('us-nullbr-content');
 
     if (!loadingEl || !contentEl) return;
 
     try {
-      const resources = await nullerService.getAllResources(tmdbId, mediaType);
+      const resources = await nullbrService.getAllResources(tmdbId, mediaType);
 
       loadingEl.style.display = 'none';
       contentEl.style.display = 'block';
 
       if (!resources.hasData) {
-        contentEl.innerHTML = '<div class="us-nuller-empty">暂无可用资源</div>';
+        contentEl.innerHTML = '<div class="us-nullbr-empty">暂无可用资源</div>';
         return;
       }
 
@@ -717,7 +726,7 @@ export const UI = {
             <div class="us-resource-list">
         `;
 
-        resources.items115.slice(0, 5).forEach((item: Nuller115Item) => {
+        resources.items115.slice(0, 5).forEach((item: Nullbr115Item) => {
           const resolution = item.resolution ? `<span class="us-resource-tag">${item.resolution}</span>` : '';
           const quality = item.quality ? `<span class="us-resource-tag">${item.quality}</span>` : '';
           const seasons = item.season_list ? `<span class="us-resource-tag">${item.season_list.join(', ')}</span>` : '';
@@ -749,7 +758,7 @@ export const UI = {
             <div class="us-resource-list">
         `;
 
-        resources.magnets.slice(0, 5).forEach((item: NullerMagnetItem, idx: number) => {
+        resources.magnets.slice(0, 5).forEach((item: NullbrMagnetItem, idx: number) => {
           const resolution = item.resolution ? `<span class="us-resource-tag">${item.resolution}</span>` : '';
           const source = item.source ? `<span class="us-resource-tag">${item.source}</span>` : '';
           const zhSub = item.zh_sub ? '<span class="us-resource-tag zh-sub">中字</span>' : '';
@@ -764,6 +773,7 @@ export const UI = {
                 </div>
               </div>
               <div class="us-resource-actions">
+                <a href="${item.magnet}" class="us-resource-btn primary" style="text-decoration:none;">打开</a>
                 <button class="us-resource-btn secondary" data-magnet="${item.magnet}" onclick="navigator.clipboard.writeText(this.dataset.magnet).then(()=>{this.textContent='已复制';setTimeout(()=>this.textContent='复制',1500)})">复制</button>
               </div>
             </div>
@@ -776,10 +786,10 @@ export const UI = {
       contentEl.innerHTML = html;
 
     } catch (error) {
-      console.error('[Nuller] Load error:', error);
+      console.error('[Nullbr] Load error:', error);
       loadingEl.style.display = 'none';
       contentEl.style.display = 'block';
-      contentEl.innerHTML = '<div class="us-nuller-empty">加载资源失败</div>';
+      contentEl.innerHTML = '<div class="us-nullbr-empty">加载资源失败</div>';
     }
   }
 };
