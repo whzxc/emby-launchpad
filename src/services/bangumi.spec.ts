@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { bangumiService } from './bangumi';
+import { CONFIG } from '../core/api-config';
 import { skipIfNoApiKey } from '../test/helpers/api-test-helpers';
 
 describe('BangumiService', () => {
@@ -48,9 +49,11 @@ describe('BangumiService', () => {
       const query = '鬼灭之刃';
 
       const result1 = await bangumiService.search(query);
+      console.log('Result 1:', result1); // Debug log
       expect(result1.meta.cached).toBeFalsy();
 
       const result2 = await bangumiService.search(query);
+      console.log('Result 2:', result2); // Debug log
       expect(result2.meta.cached).toBeTruthy();
 
       expect(result1.data).toEqual(result2.data);
@@ -59,15 +62,17 @@ describe('BangumiService', () => {
 
   describe('错误处理', () => {
     it('没有Token时应该返回错误', async () => {
-      const originalKey = GM_getValue('bangumi_token');
-      GM_setValue('bangumi_token', '');
+      const originalKey = CONFIG.bangumi.apiKey;
+      CONFIG.update('bangumi', { apiKey: '' });
 
       const result = await bangumiService.search('test');
 
       expect(result.meta.error).toBeDefined();
       expect(result.data).toBeNull();
 
-      if (originalKey) GM_setValue('bangumi_token', originalKey);
+      if (originalKey) {
+        CONFIG.update('bangumi', { apiKey: originalKey });
+      }
     });
   });
 });

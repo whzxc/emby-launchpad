@@ -1,14 +1,9 @@
 import { defineConfig } from 'vite';
 import monkey from 'vite-plugin-monkey';
-import dts from 'vite-plugin-dts';
 import pkg from './package.json'
 
 export default defineConfig({
   plugins: [
-    dts({
-      include: ['src/**/*.ts'],
-      exclude: ['src/**/*.spec.ts', 'src/**/*.test.ts']
-    }),
     {
       name: 'inject-env-vars',
       config() {

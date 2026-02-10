@@ -24,7 +24,6 @@
     "dotenv": "^17.2.4",
     "typescript": "^5.9.3",
     "vite": "^6.4.1",
-    "vite-plugin-dts": "^4.5.4",
     "vite-plugin-monkey": "^7.1.9",
     "vitest": "^4.0.18"
   }

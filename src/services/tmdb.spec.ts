@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { tmdbService } from './tmdb';
+import { CONFIG } from '../core/api-config';
 import { skipIfNoApiKey, sleep } from '../test/helpers/api-test-helpers';
 
 describe('TmdbService', () => {
@@ -116,9 +117,9 @@ describe('TmdbService', () => {
 
   describe('错误处理', () => {
     it('没有API Key时应该返回错误', async () => {
-      // 临时清除 API Key
-      const originalKey = (tmdbService as any).cache.get('tmdb_api_key');
-      GM_setValue('tmdb_api_key', '');
+      // 临时保存并清除 API Key
+      const originalKey = CONFIG.tmdb.apiKey;
+      CONFIG.update('tmdb', { apiKey: '' });
 
       const result = await tmdbService.search('test', '', null);
 
@@ -127,7 +128,7 @@ describe('TmdbService', () => {
 
       // 恢复 API Key
       if (originalKey) {
-        GM_setValue('tmdb_api_key', originalKey);
+        CONFIG.update('tmdb', { apiKey: originalKey });
       }
     });
   });

@@ -50,13 +50,19 @@ describe('CacheManager', () => {
 
       // 等待 1.5 秒后应该过期
       await sleep(1500);
-      expect(cache.get('key2')).toBeNull();
+      expect(cache.get('key2')).toBeUndefined();
     });
 
     it('has() 应该正确判断缓存是否存在', () => {
       cache.set('exists', 'value');
       expect(cache.has('exists')).toBe(true);
       expect(cache.has('notexists')).toBe(false);
+    });
+
+    it('delete() 应该删除缓存', () => {
+      cache.set('delete_test', 'value');
+      cache.delete('delete_test');
+      expect(cache.get('delete_test')).toBeUndefined();
     });
 
     it('delete() 应该删除指定缓存', () => {

@@ -37,9 +37,9 @@ export class CacheManager {
   /**
    * 获取缓存
    * @param key - 缓存键
-   * @returns 缓存值或 null
+   * @returns 缓存值或 undefined (未命中/过期)
    */
-  get<T = any>(key: string): T | null {
+  get<T = any>(key: string): T | undefined {
     const fullKey = this.prefix + key;
     const data = GM_getValue(fullKey);
 
@@ -63,7 +63,7 @@ export class CacheManager {
       this.stats.misses++;
     }
 
-    return null;
+    return undefined;
   }
 
   /**
@@ -89,7 +89,7 @@ export class CacheManager {
    * @param key - 缓存键
    */
   has(key: string): boolean {
-    return this.get(key) !== null;
+    return this.get(key) !== undefined;
   }
 
   /**

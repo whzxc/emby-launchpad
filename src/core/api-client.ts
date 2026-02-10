@@ -61,7 +61,7 @@ export abstract class ApiClient {
     // 1. 尝试从缓存获取
     if (useCache && cacheKey) {
       const cached = this.cache.get<T>(cacheKey);
-      if (cached !== null) {
+      if (cached !== undefined) {
         Utils.log(`[${this.name}] Cache hit: ${cacheKey}`);
         return {
           data: cached,

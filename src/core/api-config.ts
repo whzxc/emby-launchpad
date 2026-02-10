@@ -69,7 +69,7 @@ export class ApiConfig {
    * @param service - 服务名称
    * @param updates - 更新的配置项
    */
-  update(service: 'tmdb' | 'emby' | 'bangumi' | 'state', updates: Partial<ServiceConfig>): void {
+  update(service: 'tmdb' | 'emby' | 'bangumi' | 'nullbr' | 'state', updates: Partial<ServiceConfig>): void {
     const config = this[service] as ServiceConfig;
     Object.assign(config, updates);
 
@@ -81,6 +81,9 @@ export class ApiConfig {
       if (updates.apiKey !== undefined) GM_setValue('emby_api_key', updates.apiKey);
     } else if (service === 'bangumi' && updates.apiKey !== undefined) {
       GM_setValue('bangumi_token', updates.apiKey);
+    } else if (service === 'nullbr') {
+      if (updates.appId !== undefined) GM_setValue('nullbr_app_id', updates.appId);
+      if (updates.apiKey !== undefined) GM_setValue('nullbr_api_key', updates.apiKey);
     } else if (service === 'state' && 'dotPosition' in updates) {
       GM_setValue('us_dot_position', updates.dotPosition);
     }
@@ -94,7 +97,7 @@ export class ApiConfig {
    * @param service - 服务名称
    * @returns 是否有效
    */
-  validate(service: 'tmdb' | 'emby' | 'bangumi' | 'imdb'): boolean {
+  validate(service: 'tmdb' | 'emby' | 'bangumi' | 'imdb' | 'nullbr'): boolean {
     const config = this[service];
 
     switch (service) {
@@ -106,6 +109,8 @@ export class ApiConfig {
         return !!config.apiKey && config.apiKey.length > 0;
       case 'imdb':
         return true; // IMDB 不需要 API Key
+      case 'nullbr':
+        return !!config.appId && !!config.apiKey;
       default:
         return false;
     }
