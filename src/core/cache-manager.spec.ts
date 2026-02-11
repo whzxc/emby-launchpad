@@ -7,7 +7,6 @@ describe('CacheManager', () => {
 
   beforeEach(() => {
     cache = new CacheManager('test_cache_');
-    // 清空所有测试缓存
     cache.clear();
     cache.resetStats();
   });
@@ -42,13 +41,10 @@ describe('CacheManager', () => {
     });
 
     it('应该在过期后返回null', async () => {
-      // 设置 0.02 分钟 = 1.2 秒的 TTL
       cache.set('key2', 'value2', 0.02);
 
-      // 立即获取应该成功
       expect(cache.get('key2')).toBe('value2');
 
-      // 等待 1.5 秒后应该过期
       await sleep(1500);
       expect(cache.get('key2')).toBeUndefined();
     });

@@ -5,15 +5,12 @@ import { Utils } from '../utils';
 
 describe('NullbrService', () => {
   beforeEach(() => {
-    // Reset config
     CONFIG.update('nullbr', { appId: 'test-app-id', apiKey: 'test-api-key' });
     vi.clearAllMocks();
   });
 
   describe('get115Resources', () => {
     it('应该能获取115资源', async () => {
-      // Mock GM_xmlhttpRequest via Utils.log or just spy on GM_xmlhttpRequest directly?
-      // nullbr.ts uses GM_xmlhttpRequest directly inside a Promise, not Utils.getJSON
 
       const mockResponse = {
         '115': [
@@ -25,7 +22,6 @@ describe('NullbrService', () => {
         ]
       };
 
-      // Mock GM_xmlhttpRequest
       (global as any).GM_xmlhttpRequest = vi.fn((options) => {
         options.onload({
           status: 200,

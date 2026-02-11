@@ -65,12 +65,10 @@ export class SettingsHandler {
 
     document.body.appendChild(overlay);
 
-    // Set default value for Dot Position
     (document.getElementById('us-dot-pos') as HTMLSelectElement).value = GM_getValue('us_dot_position', 'auto');
 
     (document.getElementById('us-btn-cancel') as HTMLButtonElement).onclick = () => this.close();
     (document.getElementById('us-btn-save') as HTMLButtonElement).onclick = () => {
-      // Save Dot Position
       const dotPos = (document.getElementById('us-dot-pos') as HTMLSelectElement).value;
       GM_setValue('us_dot_position', dotPos);
       this.save();

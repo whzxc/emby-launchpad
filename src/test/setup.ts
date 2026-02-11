@@ -1,20 +1,15 @@
 import { config } from 'dotenv';
 import { vi, beforeEach } from 'vitest';
 
-// 加载 .env 文件
 config();
 
-// 创建内存存储来模拟 GM storage
 const gmStorage = new Map<string, any>();
 
-// Mock Tampermonkey APIs
 (global as any).GM_getValue = vi.fn((key: string, defaultValue?: any) => {
-  // 优先从内存存储获取
   if (gmStorage.has(key)) {
     return gmStorage.get(key);
   }
 
-  // 如果是配置项,从环境变量获取
   const envMap: Record<string, string> = {
     'tmdb_api_key': process.env.TMDB_API_KEY || '',
     'emby_server': process.env.EMBY_SERVER || '',
@@ -41,7 +36,6 @@ const gmStorage = new Map<string, any>();
 (global as any).GM_addStyle = vi.fn();
 (global as any).GM_setClipboard = vi.fn();
 
-// Mock GM_xmlhttpRequest 使用 fetch
 (global as any).GM_xmlhttpRequest = vi.fn((details: any) => {
   const { method = 'GET', url, headers = {}, data, onload, onerror } = details;
 
@@ -68,7 +62,6 @@ const gmStorage = new Map<string, any>();
     });
 });
 
-// 在每个测试前清空存储(除了配置项)
 beforeEach(() => {
   const configKeys = ['tmdb_api_key', 'emby_server', 'emby_api_key', 'bangumi_token', 'us_dot_position'];
   for (const [key, value] of gmStorage.entries()) {

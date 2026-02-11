@@ -56,15 +56,12 @@ describe('TmdbService', () => {
       const query = 'The Matrix';
       const year = '1999';
 
-      // 第一次请求
       const result1 = await tmdbService.search(query, year, 'movie');
       expect(result1.meta.cached).toBeFalsy();
 
-      // 第二次请求应该从缓存获取
       const result2 = await tmdbService.search(query, year, 'movie');
       expect(result2.meta.cached).toBeTruthy();
 
-      // 数据应该一致
       expect(result1.data).toEqual(result2.data);
     }, 15000);
 
@@ -83,7 +80,6 @@ describe('TmdbService', () => {
     it('应该能获取电影详情', async () => {
       if (skipIfNoApiKey('tmdb')) return;
 
-      // Inception 的 TMDB ID: 27205
       const result = await tmdbService.getDetails(27205, 'movie');
 
       expect(result.data).toBeDefined();
@@ -95,7 +91,6 @@ describe('TmdbService', () => {
     it('应该能获取电视剧详情', async () => {
       if (skipIfNoApiKey('tmdb')) return;
 
-      // Game of Thrones 的 TMDB ID: 1399
       const result = await tmdbService.getDetails(1399, 'tv');
 
       expect(result.data).toBeDefined();
@@ -117,7 +112,6 @@ describe('TmdbService', () => {
 
   describe('错误处理', () => {
     it('没有API Key时应该返回错误', async () => {
-      // 临时保存并清除 API Key
       const originalKey = CONFIG.tmdb.apiKey;
       CONFIG.update('tmdb', { apiKey: '' });
 
@@ -126,7 +120,6 @@ describe('TmdbService', () => {
       expect(result.meta.error).toBeDefined();
       expect(result.data).toEqual([]);
 
-      // 恢复 API Key
       if (originalKey) {
         CONFIG.update('tmdb', { apiKey: originalKey });
       }

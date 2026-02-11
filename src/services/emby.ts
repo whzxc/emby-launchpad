@@ -1,10 +1,7 @@
-import { ApiClient, ApiResponse } from '../core/api-client';
-import { CONFIG } from '../core/api-config';
-import { Utils } from '../utils';
+import { ApiClient, ApiResponse } from '@/core/api-client';
+import { CONFIG } from '@/core/api-config';
+import { Utils } from '@/utils';
 
-/**
- * Emby 媒体项
- */
 export interface EmbyItem {
   Id: string;
   Name: string;
@@ -42,20 +39,11 @@ export interface EmbyItem {
   Seasons?: EmbyItem[];
 }
 
-/**
- * Emby API 服务
- * 检查媒体库中是否存在指定影片
- */
 export class EmbyService extends ApiClient {
   constructor() {
     super('Emby');
   }
 
-  /**
-   * 检查 TMDB ID 对应的媒体是否存在于 Emby
-   * @param tmdbId - TMDB ID
-   * @returns Promise<ApiResponse<EmbyItem | null>>
-   */
   async checkExistence(tmdbId: number): Promise<ApiResponse<EmbyItem | null>> {
     const { server, apiKey } = CONFIG.emby as { server: string; apiKey: string };
 
@@ -88,10 +76,8 @@ export class EmbyService extends ApiClient {
           const item: EmbyItem = data.Items[0];
           Utils.log(`[Emby] Found: ${item.Name}`);
 
-          // If Series, fetch seasons
           if (item.Type === 'Series') {
             try {
-              // 1. Fetch Seasons
               const seasonParams = new URLSearchParams({
                 ParentId: item.Id,
                 IncludeItemTypes: 'Season',
@@ -104,13 +90,11 @@ export class EmbyService extends ApiClient {
               if (seasonData.Items && seasonData.Items.length > 0) {
                 item.Seasons = seasonData.Items;
 
-                // 2. Check for invalid counts (all 0)
                 const totalEpisodes = item.Seasons!.reduce((acc, s) => acc + (s.RecursiveItemCount || 0), 0);
 
                 if (totalEpisodes === 0) {
                   Utils.log('[Emby] Season counts are 0, fetching all episodes to aggregate manually...');
 
-                  // 3. Fallback: Fetch ALL episodes
                   const episodeParams = new URLSearchParams({
                     ParentId: item.Id,
                     IncludeItemTypes: 'Episode',
@@ -122,18 +106,14 @@ export class EmbyService extends ApiClient {
                   const allEpData = await Utils.getJSON(allEpUrl);
 
                   if (allEpData.Items && allEpData.Items.length > 0) {
-                    // Aggregate by ParentIndexNumber (Season Number)
                     const seasonMap: Record<number, number> = {};
                     allEpData.Items.forEach((ep: any) => {
                       const sParams = ep.ParentIndexNumber || 1; // Default to 1 if missing
                       seasonMap[sParams] = (seasonMap[sParams] || 0) + 1;
                     });
 
-                    // Update Seasons
                     if (item.Seasons) {
                       item.Seasons.forEach(s => {
-                        // NOTE: Emby Season Items usually have IndexNumber.
-                        // Use fallback logic if IndexNumber is missing: parse Name "Season 1" -> 1
                         let ids = s.IndexNumber;
                         if (ids === undefined) {
                           const m = s.Name.match(/(\d+)/);
@@ -174,20 +154,10 @@ export class EmbyService extends ApiClient {
     return result;
   }
 
-  /**
-   * 决定缓存时长
-   * @override
-   */
   protected determineTTL(data: any, defaultTTL: number): number {
-    // 找到的结果:长缓存(24小时),未找到:短缓存(1小时,用户可能会添加)
     return data ? defaultTTL : 60;
   }
 
-  /**
-   * 获取 Emby Web 链接
-   * @param item - Emby 媒体项
-   * @returns Web 链接
-   */
   getWebUrl(item: EmbyItem | null): string {
     if (!item) return '';
 
@@ -196,5 +166,4 @@ export class EmbyService extends ApiClient {
   }
 }
 
-// 导出单例实例
 export const embyService = new EmbyService();

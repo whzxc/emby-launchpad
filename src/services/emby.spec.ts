@@ -5,14 +5,12 @@ import { Utils } from '../utils';
 
 describe('EmbyService', () => {
   beforeEach(() => {
-    // Reset config
     CONFIG.update('emby', { server: 'https://emby.example.com', apiKey: 'test-api-key' });
     vi.clearAllMocks();
   });
 
   describe('checkExistence', () => {
     it('应该能检查存在的媒体', async () => {
-      // Mock search response
       const searchUrl = 'https://emby.example.com/emby/Items';
       vi.spyOn(Utils, 'getJSON').mockImplementation(async (url) => {
         if (url.includes('AnyProviderIdEquals=tmdb.123')) {
@@ -55,7 +53,6 @@ describe('EmbyService', () => {
     });
 
     it('应该处理由剧集组成的系列', async () => {
-      // Mock series search response
       vi.spyOn(Utils, 'getJSON').mockImplementation(async (url) => {
         if (url.includes('AnyProviderIdEquals=tmdb.456')) {
           return {
@@ -66,7 +63,6 @@ describe('EmbyService', () => {
             }]
           };
         }
-        // Mock seasons fetch
         if (url.includes('ParentId=series1') && url.includes('IncludeItemTypes=Season')) {
           return {
             Items: [{

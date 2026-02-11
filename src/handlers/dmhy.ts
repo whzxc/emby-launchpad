@@ -1,17 +1,15 @@
-import { Utils } from '../utils';
-import { UI } from '../utils/ui';
-import { CONFIG } from '../core/api-config';
-import { tmdbService, TmdbSearchResult } from '../services/tmdb';
-import { embyService, EmbyItem } from '../services/emby';
-import { bangumiService } from '../services/bangumi';
+import { Utils } from '@/utils';
+import { UI } from '@/utils/ui';
+import { CONFIG } from '@/core/api-config';
+import { bangumiService } from '@/services/bangumi';
 import { BaseMediaHandler } from './base-handler';
-import { parseDmhyTitle } from '../utils/title-parser';
-import { ParsedTitle, MediaType } from '../types/common';
+import { parseDmhyTitle } from '@/utils/title-parser';
+import { MediaType } from '@/types/common';
 
 export class DmhyListHandler extends BaseMediaHandler {
   init(): void {
     Utils.log('Initializing DMHY List Handler');
-    UI.init();
+
     Utils.addStyle(`
         table#topic_list tr td span.tag { display: none; }
         .us-tag {
@@ -34,7 +32,6 @@ export class DmhyListHandler extends BaseMediaHandler {
   }
 
   processRows(): void {
-    // DMHY table selector assumption: id="topic_list" > tbody > tr
     const rows = document.querySelectorAll('table#topic_list tbody tr');
     Utils.log(`DMHY: Found ${rows.length} rows`);
 
@@ -42,7 +39,6 @@ export class DmhyListHandler extends BaseMediaHandler {
       const titleLink = tr.querySelector('td.title > a');
       if (!titleLink) return;
 
-      // Avoid reprocessing
       if ((tr as HTMLElement).dataset.usChecked) return;
       (tr as HTMLElement).dataset.usChecked = 'true';
 
@@ -53,14 +49,11 @@ export class DmhyListHandler extends BaseMediaHandler {
   async checkRow(tr: HTMLElement, link: HTMLAnchorElement): Promise<void> {
     const rawTitle = link.textContent?.trim() || '';
 
-    // Step 1: 解析标题
     const parsed = parseDmhyTitle(rawTitle); // 使用统一工具
     const cleanTitle = parsed.title;
 
-    // Add loading/status indicator  
     const dot = UI.createDot({ titleElement: link });
 
-    // Update UI if valid
     if (cleanTitle) {
       link.innerHTML = ''; // Clear content
 
@@ -73,7 +66,6 @@ export class DmhyListHandler extends BaseMediaHandler {
         else link.appendChild(span);
       };
 
-      // Order: [Title] [Group] [Res] [Fmt] [Sub]
       link.appendChild(document.createTextNode(cleanTitle + ' ')); // Title first
 
       if (parsed.group) addTag(parsed.group, 'group'); // Group after title
@@ -88,26 +80,22 @@ export class DmhyListHandler extends BaseMediaHandler {
       let searchTitle = cleanTitle;
       let mediaType: MediaType = 'tv'; // Default type
 
-      // Step 2: Bangumi
       if (CONFIG.bangumi.apiKey) {
         const bgmResult = await bangumiService.search(cleanTitle);
         const bgmSubject = bgmResult.data;
         if (bgmSubject) {
           searchTitle = bgmSubject.name_cn || bgmSubject.name;
-          // Detect Media Type (Movie vs TV)
           if (bgmSubject.type === 1) {
             mediaType = 'movie';
           }
         }
       }
 
-      // 使用基类的通用媒体检查流程
       const result = await this.checkMedia(searchTitle, '', mediaType, rawTitle);
       this.updateDotStatus(dot, result, cleanTitle, [cleanTitle, searchTitle]);
     } catch (e) {
       this.handleError(dot, e, cleanTitle, this.logger);
     }
   }
-
 
 }

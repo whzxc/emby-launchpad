@@ -4,7 +4,6 @@ import { imdbService } from './imdb';
 describe('ImdbService', () => {
   describe('getRating', () => {
     it('应该能获取IMDB评分', async () => {
-      // Inception 的 IMDB ID
       const result = await imdbService.getRating('tt1375666');
 
       expect(result.data).toBeDefined();
@@ -30,7 +29,6 @@ describe('ImdbService', () => {
     it('无效ID应该返回null', async () => {
       const result = await imdbService.getRating('tt99999999999');
 
-      // 可能返回null或者错误
       expect(result.data === null || result.meta.error).toBeTruthy();
     }, 15000);
   });

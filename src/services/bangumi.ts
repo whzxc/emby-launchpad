@@ -1,10 +1,7 @@
-import { ApiClient, ApiResponse } from '../core/api-client';
-import { CONFIG } from '../core/api-config';
-import { Utils } from '../utils';
+import { ApiClient, ApiResponse } from '@/core/api-client';
+import { CONFIG } from '@/core/api-config';
+import { Utils } from '@/utils';
 
-/**
- * Bangumi 搜索结果
- */
 export interface BangumiSubject {
   id: number;
   name: string;
@@ -22,20 +19,11 @@ export interface BangumiSubject {
   rank?: number;
 }
 
-/**
- * Bangumi API 服务
- * 提供动漫搜索功能
- */
 export class BangumiService extends ApiClient {
   constructor() {
     super('Bangumi');
   }
 
-  /**
-   * 搜索动漫
-   * @param query - 搜索关键词
-   * @returns Promise<ApiResponse<BangumiSubject | null>>
-   */
   async search(query: string): Promise<ApiResponse<BangumiSubject | null>> {
     const apiKey = CONFIG.bangumi.apiKey;
 
@@ -43,7 +31,7 @@ export class BangumiService extends ApiClient {
       Utils.log('[Bangumi] Token not configured');
       return {
         data: null,
-        meta: { error: 'Token not configured', source: this.name, timestamp: new Date().toISOString() }
+        meta: { error: 'Token not configured', source: this.name, timestamp: new Date().toISOString() },
       };
     }
 
@@ -55,12 +43,11 @@ export class BangumiService extends ApiClient {
         const url = `${config.baseUrl}/search/subjects`;
         const body = {
           keyword: query,
-          filter: { type: [2] } // 2 = Anime
+          filter: { type: [2] }, // 2 = Anime
         };
 
         Utils.log(`[Bangumi] Searching anime: ${query}`);
 
-        // 使用 Promise 包装 GM_xmlhttpRequest
         const response = await new Promise<any>((resolve, reject) => {
           GM_xmlhttpRequest({
             method: 'POST',
@@ -68,15 +55,14 @@ export class BangumiService extends ApiClient {
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${apiKey}`,
-              'User-Agent': 'Mozilla/5.0'
+              'User-Agent': 'Mozilla/5.0',
             },
             data: JSON.stringify(body),
-            onload: (r) => resolve(r),
-            onerror: (e) => reject(e)
+            onload: (r: any) => resolve(r),
+            onerror: (e: any) => reject(e),
           });
         });
 
-        // 检查响应状态
         if (response.status === 200) {
           const data = JSON.parse(response.responseText);
 
@@ -95,19 +81,13 @@ export class BangumiService extends ApiClient {
       cacheKey,
       cacheTTL: 1440, // 24小时
       useCache: true,
-      useQueue: true
+      useQueue: true,
     });
   }
 
-  /**
-   * 决定缓存时长
-   * @override
-   */
   protected determineTTL(data: any, defaultTTL: number): number {
-    // 有结果:长缓存,无结果:短缓存
     return data ? defaultTTL : 60;
   }
 }
 
-// 导出单例实例
 export const bangumiService = new BangumiService();

@@ -1,9 +1,6 @@
-import { Utils } from '../../utils';
-import { UI } from '../../utils/ui';
-import { CONFIG } from '../../core/api-config';
-import { tmdbService } from '../../services/tmdb';
-import { embyService, EmbyItem } from '../../services/emby';
-import { imdbService } from '../../services/imdb';
+import { Utils } from '@/utils';
+import { UI } from '@/utils/ui';
+import { imdbService } from '@/services/imdb';
 import { BaseMediaHandler } from '../base-handler';
 
 export class DoubanSubjectHandler extends BaseMediaHandler {
@@ -18,9 +15,6 @@ export class DoubanSubjectHandler extends BaseMediaHandler {
     Utils.log('Initializing Douban Subject Handler');
     if (!this.doubanId) return;
 
-    UI.init();
-
-    // Replaced sidebar panels with Dot on Poster
     this.addDotToPoster();
 
     this.fetchRatings();
@@ -36,17 +30,15 @@ export class DoubanSubjectHandler extends BaseMediaHandler {
     const yearEl = document.querySelector('#content .year');
     const year = yearEl ? yearEl.textContent?.replace(/[()]/g, '') || '' : '';
 
-    // Create Dot
     const titleEl = document.querySelector('h1 span');
     const dot = UI.createDot({
       posterContainer: posterContainer as HTMLElement,
-      titleElement: titleEl as HTMLElement
+      titleElement: titleEl as HTMLElement,
     });
     dot.style.zIndex = '10';
     dot.title = `Checking ${title}...`;
 
     try {
-      // 使用基类的通用媒体检查流程
       const result = await this.checkMedia(title, year, null, title);
       this.updateDotStatus(dot, result, title, [title]);
     } catch (e) {
@@ -62,7 +54,6 @@ export class DoubanSubjectHandler extends BaseMediaHandler {
 
     const btn = document.querySelector('#copy-movie-info') as HTMLAnchorElement;
     btn.addEventListener('click', () => {
-      // Construct the info text
       let text = `◎Title　${document.title.replace('(豆瓣)', '').trim()}\n`;
 
       const yearEl = document.querySelector('#content .year');
@@ -98,7 +89,6 @@ export class DoubanSubjectHandler extends BaseMediaHandler {
   }
 
   async fetchRatings(): Promise<void> {
-    // Check for IMDb link
     const imdbLinkEl = document.querySelector('#info a[href^="https://www.imdb.com/title/"]');
     if (imdbLinkEl) {
       const imdbId = imdbLinkEl.textContent?.trim() || '';

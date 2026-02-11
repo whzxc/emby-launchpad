@@ -98,7 +98,6 @@ describe('RequestQueue', () => {
       const executionOrder: string[] = [];
       const resolvers: Function[] = [];
 
-      // 创建一个阻塞任务来占满队列
       const createBlocker = (id: string) => {
         return queue.enqueue(
           () => new Promise(resolve => {
@@ -111,29 +110,23 @@ describe('RequestQueue', () => {
         );
       };
 
-      // 1. 填满队列 (并发数 2)
       const blocker1 = createBlocker('blocker1');
       const blocker2 = createBlocker('blocker2');
 
-      // 2. 添加低优先级任务 (应该在队列中)
       const low = queue.enqueue(
         async () => { executionOrder.push('low'); return 'low'; },
         { priority: 1 }
       );
 
-      // 3. 添加高优先级任务 (应该插队到低优先级前面)
       const high = queue.enqueue(
         async () => { executionOrder.push('high'); return 'high'; },
         { priority: 10 }
       );
 
-      // 4. 释放阻塞任务
       resolvers.forEach(r => r());
 
       await Promise.all([blocker1, blocker2, low, high]);
 
-      // 验证顺序: blocker -> high -> low
-      // high 应该在 low 之前执行
       const highIndex = executionOrder.indexOf('high');
       const lowIndex = executionOrder.indexOf('low');
 
@@ -174,7 +167,6 @@ describe('RequestQueue', () => {
         return 'done';
       });
 
-      // 等待一下让请求开始执行
       await sleep(10);
 
       const status = queue.getStatus();

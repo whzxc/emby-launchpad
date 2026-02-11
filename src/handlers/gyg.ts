@@ -1,16 +1,14 @@
-import { Utils } from '../utils';
-import { UI } from '../utils/ui';
-import { CONFIG } from '../core/api-config';
-import { tmdbService, TmdbSearchResult } from '../services/tmdb';
-import { embyService, EmbyItem } from '../services/emby';
+import { Utils } from '@/utils';
+import { UI } from '@/utils/ui';
+import { CONFIG } from '@/core/api-config';
+import { TmdbSearchResult, tmdbService } from '@/services/tmdb';
+import { embyService } from '@/services/emby';
 import { BaseMediaHandler } from './base-handler';
 
 export class GYGHandler extends BaseMediaHandler {
   init(): void {
     Utils.log('Initializing GYG Handler');
-    UI.init();
 
-    // Existing functionality: TMDB/Emby Card in Ratings Section
     const metaContainer = document.querySelector('.main-ui-meta');
     const ratingSection = document.querySelector('.ratings-section');
     if (!metaContainer || !ratingSection) return;
@@ -28,7 +26,6 @@ export class GYGHandler extends BaseMediaHandler {
 
     this.render(titleRaw, yearRaw, wrapper);
 
-    // NEW: Add Dot to Main Poster
     const posterContainer = document.querySelector('.main-meta > .img');
     const titleHeader = metaContainer.querySelector('h1');
     if (posterContainer) {
@@ -45,7 +42,6 @@ export class GYGHandler extends BaseMediaHandler {
       return;
     }
 
-    // Default to first result
     this.renderCard(results.data[0], wrapper, results.data);
   }
 
@@ -57,7 +53,6 @@ export class GYGHandler extends BaseMediaHandler {
     const tmdbUrl = `https://www.themoviedb.org/${item.media_type}/${item.id}`;
     const copyText = `${title} (${yearStr})`;
 
-    // Selector if multiple results
     let selectorHtml = '';
     if (allResults.length > 1) {
       const options = allResults.map((r, idx) => {
@@ -68,7 +63,7 @@ export class GYGHandler extends BaseMediaHandler {
       selectorHtml = `<select class="result-selector" style="width:100%; padding:4px; margin-bottom:5px;">${options}</select>`;
     }
 
-    const html = `
+    wrapper.innerHTML = `
                 ${selectorHtml}
                 <div class="gyg-card tmdb-card">
                     <div class="tmdb-header-row" onclick="window.open('${tmdbUrl}', '_blank')" title="Go to TMDB">
@@ -86,9 +81,7 @@ export class GYGHandler extends BaseMediaHandler {
                     <span class="emby-badge emby-loading">Checking...</span>
                 </div>
             `;
-    wrapper.innerHTML = html;
 
-    // Events
     const selector = wrapper.querySelector('.result-selector') as HTMLSelectElement | null;
     if (selector) {
       selector.addEventListener('change', (e) => {
@@ -120,7 +113,7 @@ export class GYGHandler extends BaseMediaHandler {
       badge.textContent = 'Exists';
       const embyLink = `${CONFIG.emby.server}/web/index.html#!/item?id=${embyItem.Id}&serverId=${embyItem.ServerId}`;
       container.onclick = () => window.open(embyLink, '_blank');
-      container.title = "Play on Emby";
+      container.title = 'Play on Emby';
     } else {
       badge.className = 'emby-badge emby-no';
       badge.textContent = 'Not Found';
@@ -135,7 +128,6 @@ export class GYGHandler extends BaseMediaHandler {
     dot.style.zIndex = '20';
 
     try {
-      // 使用基类的通用媒体检查流程
       const result = await this.checkMedia(title, year, 'movie', title);
       this.updateDotStatus(dot, result, title, [title]);
     } catch (e) {
@@ -147,7 +139,6 @@ export class GYGHandler extends BaseMediaHandler {
 export class GYGListHandler extends BaseMediaHandler {
   init(): void {
     Utils.log('Initializing GYG List Handler');
-    UI.init();
     this.processCards();
     this.observe();
   }
@@ -169,24 +160,20 @@ export class GYGListHandler extends BaseMediaHandler {
       const li = imgDiv.closest('li');
       if (!li) return;
 
-      // Use a unique attribute to avoid double processing
       if ((li as HTMLElement).dataset.gygEmbyChecked) return;
       (li as HTMLElement).dataset.gygEmbyChecked = 'true';
 
-      // Fire and forget check
       this.checkCard(li as HTMLElement, imgDiv as HTMLElement);
     });
   }
 
   async checkCard(li: HTMLElement, imgDiv: HTMLElement): Promise<void> {
-    // Find Title
     const titleEl = li.querySelector('.li-bottom h3 a') as HTMLAnchorElement | null;
     if (!titleEl) return;
 
     let rawTitle = titleEl.getAttribute('title') || titleEl.textContent || '';
     rawTitle = rawTitle.trim();
 
-    // Find Year
     const tagEl = li.querySelector('.li-bottom .tag');
     let year = '';
     if (tagEl) {
@@ -194,10 +181,8 @@ export class GYGListHandler extends BaseMediaHandler {
       year = parts[0]?.trim() || '';
     }
 
-    // Title Cleaning
     let cleanTitle = rawTitle;
 
-    // Regex to detect "Season N", "第N季", "S5"
     const seasonRegex = /(?:[\s:：(（\[【]|^)(?:第[0-9一二三四五六七八九十]+季|Season\s*\d+|S\d+).*/i;
 
     const yearParam = year;
@@ -205,12 +190,10 @@ export class GYGListHandler extends BaseMediaHandler {
       cleanTitle = rawTitle.replace(seasonRegex, '').trim();
     }
 
-    // Add Loading Dot
     const dot = UI.createDot({ posterContainer: imgDiv, titleElement: titleEl });
     dot.title = `Checking ${cleanTitle}...`;
 
     try {
-      // 使用基类的通用媒体检查流程
       const result = await this.checkMedia(cleanTitle, yearParam, null, rawTitle);
       this.updateDotStatus(dot, result, cleanTitle, [cleanTitle]);
     } catch (e) {

@@ -1,6 +1,3 @@
-/**
- * API 服务配置接口
- */
 interface ServiceConfig {
   apiKey?: string;
   baseUrl?: string;
@@ -9,19 +6,11 @@ interface ServiceConfig {
   [key: string]: any;
 }
 
-/**
- * 配置变更监听器
- */
 type ConfigListener = (service: string, config: ServiceConfig) => void;
 
-/**
- * API 配置中心
- * 统一管理所有 API Keys、URLs 和服务配置
- */
 export class ApiConfig {
   private listeners: ConfigListener[] = [];
 
-  // TMDB 配置
   readonly tmdb: ServiceConfig = {
     apiKey: GM_getValue('tmdb_api_key', ''),
     baseUrl: 'https://api.themoviedb.org/3',
@@ -29,27 +18,23 @@ export class ApiConfig {
     cacheTTL: 1440
   };
 
-  // Emby 配置
   readonly emby: ServiceConfig = {
     server: GM_getValue('emby_server', ''),
     apiKey: GM_getValue('emby_api_key', ''),
     cacheTTL: 60
   };
 
-  // Bangumi 配置
   readonly bangumi: ServiceConfig = {
     apiKey: GM_getValue('bangumi_token', ''),
     baseUrl: 'https://api.bgm.tv',
     cacheTTL: 1440
   };
 
-  // IMDB 配置
   readonly imdb: ServiceConfig = {
     baseUrl: 'https://www.imdb.com',
     cacheTTL: 10080 // 7天
   };
 
-  // Nullbr 配置
   readonly nullbr: ServiceConfig = {
     baseUrl: 'https://api.nullbr.eu.org',
     appId: GM_getValue('nullbr_app_id', process.env.NULLBR_APP_ID || ''),
@@ -57,23 +42,16 @@ export class ApiConfig {
     cacheTTL: 10080 // 7天（有结果）
   };
 
-  // 状态配置
   readonly state: {
     dotPosition: 'auto' | 'poster_tl' | 'poster_tr' | 'poster_bl' | 'poster_br' | 'title_left' | 'title_right';
   } = {
       dotPosition: GM_getValue('us_dot_position', 'auto')
     };
 
-  /**
-   * 更新配置
-   * @param service - 服务名称
-   * @param updates - 更新的配置项
-   */
   update(service: 'tmdb' | 'emby' | 'bangumi' | 'nullbr' | 'state', updates: Partial<ServiceConfig>): void {
     const config = this[service] as ServiceConfig;
     Object.assign(config, updates);
 
-    // 持久化到 GM storage
     if (service === 'tmdb' && updates.apiKey !== undefined) {
       GM_setValue('tmdb_api_key', updates.apiKey);
     } else if (service === 'emby') {
@@ -88,15 +66,9 @@ export class ApiConfig {
       GM_setValue('us_dot_position', updates.dotPosition);
     }
 
-    // 通知监听器
     this.notifyListeners(service, config);
   }
 
-  /**
-   * 验证配置
-   * @param service - 服务名称
-   * @returns 是否有效
-   */
   validate(service: 'tmdb' | 'emby' | 'bangumi' | 'imdb' | 'nullbr'): boolean {
     const config = this[service];
 
@@ -116,18 +88,10 @@ export class ApiConfig {
     }
   }
 
-  /**
-   * 添加配置变更监听器
-   * @param listener - 监听器函数
-   */
   addListener(listener: ConfigListener): void {
     this.listeners.push(listener);
   }
 
-  /**
-   * 移除配置变更监听器
-   * @param listener - 监听器函数
-   */
   removeListener(listener: ConfigListener): void {
     const index = this.listeners.indexOf(listener);
     if (index > -1) {
@@ -135,11 +99,6 @@ export class ApiConfig {
     }
   }
 
-  /**
-   * 通知所有监听器
-   * @param service - 服务名称
-   * @param config - 新配置
-   */
   private notifyListeners(service: string, config: ServiceConfig): void {
     this.listeners.forEach(listener => {
       try {
@@ -150,9 +109,6 @@ export class ApiConfig {
     });
   }
 
-  /**
-   * 获取配置摘要
-   */
   getSummary(): Record<string, any> {
     return {
       tmdb: {
@@ -174,5 +130,4 @@ export class ApiConfig {
   }
 }
 
-// 导出单例实例
 export const CONFIG = new ApiConfig();

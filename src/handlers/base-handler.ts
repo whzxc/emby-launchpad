@@ -1,17 +1,10 @@
-/**
- * Handler抽象基类
- * 提供Handler通用的媒体检查流程，减少重复代码
- */
 
-import { UI } from '../utils/ui';
-import { tmdbService } from '../services/tmdb';
-import { embyService, EmbyItem } from '../services/emby';
-import { ProcessLogger } from '../utils/logger';
-import { TmdbInfo, MediaType } from '../types/common';
+import { UI } from '@/utils/ui';
+import { tmdbService } from '@/services/tmdb';
+import { EmbyItem, embyService } from '@/services/emby';
+import { ProcessLogger } from '@/utils/logger';
+import { MediaType, TmdbInfo } from '@/types/common';
 
-/**
- * 媒体检查结果
- */
 export interface MediaCheckResult {
   found: boolean;
   embyItem: EmbyItem | null;
@@ -19,10 +12,6 @@ export interface MediaCheckResult {
   logger: ProcessLogger;
 }
 
-/**
- * Handler抽象基类
- * 提供通用的媒体检查流程
- */
 export abstract class BaseMediaHandler {
   protected logger: ProcessLogger;
 
@@ -30,18 +19,11 @@ export abstract class BaseMediaHandler {
     this.logger = new ProcessLogger();
   }
 
-  /**
-   * 通用媒体检查流程
-   * @param title 清理后的标题
-   * @param year 年份（可选）
-   * @param mediaType 媒体类型
-   * @param originalTitle 原始标题（用于日志）
-   */
   protected async checkMedia(
     title: string,
     year: string = '',
     mediaType: MediaType | null = null,
-    originalTitle?: string
+    originalTitle?: string,
   ): Promise<MediaCheckResult> {
     const logger = new ProcessLogger();
 
@@ -49,15 +31,14 @@ export abstract class BaseMediaHandler {
       'Original Title': originalTitle || title,
       'Cleaned Title': title,
       'Year': year,
-      'Type': mediaType
+      'Type': mediaType,
     });
 
     try {
-      // 1. 搜索TMDB
       const tmdbResult = await tmdbService.search(title, year, mediaType);
       logger.logApiRequest('TMDB', tmdbResult.meta, {
         count: tmdbResult.data.length,
-        top_result: tmdbResult.data[0] || null
+        top_result: tmdbResult.data[0] || null,
       });
 
       if (tmdbResult.data.length === 0) {
@@ -66,29 +47,28 @@ export abstract class BaseMediaHandler {
           found: false,
           embyItem: null,
           tmdbInfo: null,
-          logger
+          logger,
         };
       }
 
       const bestMatch = tmdbResult.data[0];
       const tmdbInfo: TmdbInfo = {
         id: bestMatch.id,
-        mediaType: bestMatch.media_type
+        mediaType: bestMatch.media_type,
       };
 
-      // 2. 检查Emby
       const embyResult = await embyService.checkExistence(bestMatch.id);
       const embyItem = embyResult.data;
 
       logger.logApiRequest('Emby', embyResult.meta,
-        embyItem ? `Found: ${embyItem.Name} (ID: ${embyItem.Id})` : 'Not Found'
+        embyItem ? `Found: ${embyItem.Name} (ID: ${embyItem.Id})` : 'Not Found',
       );
 
       return {
         found: !!embyItem,
         embyItem,
         tmdbInfo,
-        logger
+        logger,
       };
 
     } catch (error) {
@@ -97,19 +77,16 @@ export abstract class BaseMediaHandler {
         found: false,
         embyItem: null,
         tmdbInfo: null,
-        logger
+        logger,
       };
     }
   }
 
-  /**
-   * 更新Dot状态并绑定点击事件
-   */
   protected updateDotStatus(
     dot: HTMLElement,
     result: MediaCheckResult,
     title: string,
-    searchQueries: string[] = []
+    searchQueries: string[] = [],
   ): void {
     dot.classList.remove('loading');
 
@@ -126,7 +103,7 @@ export abstract class BaseMediaHandler {
           result.logger.getLogs(),
           result.embyItem,
           queries,
-          result.tmdbInfo || undefined
+          result.tmdbInfo || undefined,
         );
       };
     } else {
@@ -140,15 +117,12 @@ export abstract class BaseMediaHandler {
           result.logger.getLogs(),
           null,
           queries,
-          result.tmdbInfo || undefined
+          result.tmdbInfo || undefined,
         );
       };
     }
   }
 
-  /**
-   * 处理错误情况，更新Dot为错误状态
-   */
   protected handleError(dot: HTMLElement, error: any, title: string, logger: ProcessLogger): void {
     console.error(error);
     logger.logError(error);

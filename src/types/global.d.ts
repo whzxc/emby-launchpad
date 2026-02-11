@@ -1,7 +1,4 @@
-/// <reference types="tampermonkey" />
-/// <reference types="vite/client" />
 
-// 扩展 Window 接口
 interface Window {
   GM_getValue: typeof GM_getValue;
   GM_setValue: typeof GM_setValue;
@@ -14,7 +11,6 @@ interface Window {
   _us_log_stash?: Record<number, string>;
 }
 
-// 环境变量类型
 interface ImportMetaEnv {
   readonly VITE_TMDB_API_KEY: string;
   readonly VITE_EMBY_SERVER: string;
@@ -26,7 +22,6 @@ interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
 
-// 声明全局变量
 declare const GM_getValue: (key: string, defaultValue?: any) => any;
 declare const GM_setValue: (key: string, value: any) => void;
 declare const GM_listValues: () => string[];
