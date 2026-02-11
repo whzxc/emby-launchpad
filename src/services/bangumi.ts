@@ -48,19 +48,11 @@ export class BangumiService extends ApiClient {
 
         Utils.log(`[Bangumi] Searching anime: ${query}`);
 
-        const response = await new Promise<any>((resolve, reject) => {
-          GM_xmlhttpRequest({
-            method: 'POST',
-            url: url,
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${apiKey}`,
-              'User-Agent': 'Mozilla/5.0',
-            },
-            data: JSON.stringify(body),
-            onload: (r: any) => resolve(r),
-            onerror: (e: any) => reject(e),
-          });
+        const response = await GM.xmlHttpRequest({
+          method: 'POST',
+          url: url,
+          responseType: 'json',
+          headers: { 'Authorization': `Bearer ${apiKey}` },
         });
 
         if (response.status === 200) {

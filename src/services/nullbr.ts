@@ -67,14 +67,11 @@ class NullbrService extends ApiClient {
       requestFn: async () => {
         Utils.log(`[Nullbr] Fetching 115 resources: ${mediaType}/${tmdbId}`);
 
-        const response = await new Promise<any>((resolve, reject) => {
-          GM_xmlhttpRequest({
-            method: 'GET',
-            url: url,
-            headers: this.getHeaders(),
-            onload: (r: any) => resolve(r),
-            onerror: (e: any) => reject(e),
-          });
+        const response = await GM.xmlHttpRequest({
+          method: 'GET',
+          url: url,
+          responseType: 'json',
+          headers: this.getHeaders(),
         });
 
         if (response.status === 200) {

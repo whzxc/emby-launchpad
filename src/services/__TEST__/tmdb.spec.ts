@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { tmdbService } from '../tmdb';
 import { CONFIG } from '../../core/api-config';
-import { skipIfNoApiKey } from '../../test/helpers/api-test-helpers';
+import { skipIfNoApiKey } from '../../test/api-test-helpers';
 
 // Polyfill GM for testing environment
 if (typeof (globalThis as any).GM === 'undefined') {

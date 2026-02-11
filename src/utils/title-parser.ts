@@ -8,13 +8,6 @@ export function hasSeasonInfo(title: string): boolean {
   return SEASON_REGEX.test(title);
 }
 
-export function cleanTitle(title: string): string {
-  return title
-    .replace(/[【】\[\]()（）]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
 export interface ParsedTitle {
   title: string;
   group?: string;

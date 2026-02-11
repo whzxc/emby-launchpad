@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { RequestQueue } from '../request-queue';
-import { sleep } from '../../test/helpers/api-test-helpers';
+import { sleep } from '../../test/api-test-helpers';
 
 describe('RequestQueue', () => {
   let queue: RequestQueue;

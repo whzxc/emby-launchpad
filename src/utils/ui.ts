@@ -468,7 +468,7 @@ export const UI = {
             <div class="us-resource-list">
         `;
 
-        resources.magnets.slice(0, 5).forEach((item: NullbrMagnetItem, idx: number) => {
+        resources.magnets.slice(0, 5).forEach((item: NullbrMagnetItem) => {
           const resolution = item.resolution ? `<span class="us-resource-tag">${item.resolution}</span>` : '';
           const source = item.source ? `<span class="us-resource-tag">${item.source}</span>` : '';
           const zhSub = item.zh_sub ? '<span class="us-resource-tag zh-sub">中字</span>' : '';

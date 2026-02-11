@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { CacheManager } from '../cache-manager';
-import { sleep } from '../../test/helpers/api-test-helpers';
+import { sleep } from '../../test/api-test-helpers';
 
 describe('CacheManager', () => {
   let cache: CacheManager;
