@@ -3,6 +3,22 @@ import { tmdbService } from './tmdb';
 import { CONFIG } from '../core/api-config';
 import { skipIfNoApiKey, sleep } from '../test/helpers/api-test-helpers';
 
+// Polyfill GM for testing environment
+if (typeof (globalThis as any).GM === 'undefined') {
+  (globalThis as any).GM = {
+    xmlHttpRequest: async (details: any) => {
+      try {
+        const response = await fetch(details.url);
+        const data = await response.json();
+        return { response: data };
+      } catch (error) {
+        console.error('Fetch error:', error);
+        return { response: { results: [] } }; // Fallback
+      }
+    }
+  };
+}
+
 describe('TmdbService', () => {
   beforeEach(() => {
     if (skipIfNoApiKey('tmdb')) {
@@ -10,37 +26,26 @@ describe('TmdbService', () => {
     }
   });
 
-  describe('search', () => {
+  describe('searchMovie', () => {
     it('应该能搜索电影', async () => {
       if (skipIfNoApiKey('tmdb')) return;
 
-      const result = await tmdbService.search('Inception', '2010', 'movie');
+      const result = await tmdbService.searchMovie('Inception', '2010');
 
       expect(result.data).toBeDefined();
       expect(Array.isArray(result.data)).toBe(true);
       expect(result.data.length).toBeGreaterThan(0);
 
       const firstResult = result.data[0];
-      expect(firstResult.media_type).toBe('movie');
-      expect(firstResult.title || firstResult.name).toBeTruthy();
-    }, 10000);
-
-    it('应该能搜索电视剧', async () => {
-      if (skipIfNoApiKey('tmdb')) return;
-
-      const result = await tmdbService.search('Game of Thrones', '', 'tv');
-
-      expect(result.data).toBeDefined();
-      expect(result.data.length).toBeGreaterThan(0);
-
-      const firstResult = result.data[0];
-      expect(firstResult.media_type).toBe('tv');
+      // Movie type doesn't have media_type property in the search/movie response usually, 
+      // but let's check for title which is specific to movies
+      expect(firstResult.title).toBeTruthy();
     }, 10000);
 
     it('应该能按年份过滤', async () => {
       if (skipIfNoApiKey('tmdb')) return;
 
-      const result = await tmdbService.search('Interstellar', '2014', 'movie');
+      const result = await tmdbService.searchMovie('Interstellar', '2014');
 
       expect(result.data).toBeDefined();
       expect(result.data.length).toBeGreaterThan(0);
@@ -49,17 +54,34 @@ describe('TmdbService', () => {
       const year = firstResult.release_date?.split('-')[0];
       expect(year).toBe('2014');
     }, 10000);
+  });
 
+  describe('searchTv', () => {
+    it('应该能搜索电视剧', async () => {
+      if (skipIfNoApiKey('tmdb')) return;
+
+      const result = await tmdbService.searchTv('Game of Thrones');
+
+      expect(result.data).toBeDefined();
+      expect(result.data.length).toBeGreaterThan(0);
+
+      const firstResult = result.data[0];
+      // TV type has name instead of title
+      expect(firstResult.name).toBeTruthy();
+    }, 10000);
+  });
+
+  describe('caching', () => {
     it('应该使用缓存机制', async () => {
       if (skipIfNoApiKey('tmdb')) return;
 
       const query = 'The Matrix';
       const year = '1999';
 
-      const result1 = await tmdbService.search(query, year, 'movie');
+      const result1 = await tmdbService.searchMovie(query, year);
       expect(result1.meta.cached).toBeFalsy();
 
-      const result2 = await tmdbService.search(query, year, 'movie');
+      const result2 = await tmdbService.searchMovie(query, year);
       expect(result2.meta.cached).toBeTruthy();
 
       expect(result1.data).toEqual(result2.data);
@@ -68,7 +90,7 @@ describe('TmdbService', () => {
     it('无结果时应该返回空数组', async () => {
       if (skipIfNoApiKey('tmdb')) return;
 
-      const result = await tmdbService.search('xyzabc123nonexistentmovie999', '', null);
+      const result = await tmdbService.searchMovie('xyzabc123nonexistentmovie999');
 
       expect(result.data).toBeDefined();
       expect(Array.isArray(result.data)).toBe(true);
@@ -76,11 +98,11 @@ describe('TmdbService', () => {
     }, 10000);
   });
 
-  describe('getDetails', () => {
+  describe('getMovieDetails', () => {
     it('应该能获取电影详情', async () => {
       if (skipIfNoApiKey('tmdb')) return;
 
-      const result = await tmdbService.getDetails(27205, 'movie');
+      const result = await tmdbService.getMovieDetails(27205);
 
       expect(result.data).toBeDefined();
       expect(result.data).toHaveProperty('title');
@@ -88,26 +110,28 @@ describe('TmdbService', () => {
       expect(result.data.id).toBe(27205);
     }, 10000);
 
+    it('详情请求也应该使用缓存', async () => {
+      if (skipIfNoApiKey('tmdb')) return;
+
+      const result1 = await tmdbService.getMovieDetails(27205);
+      expect(result1.meta.cached).toBeFalsy();
+
+      const result2 = await tmdbService.getMovieDetails(27205);
+      expect(result2.meta.cached).toBeTruthy();
+    }, 15000);
+  });
+
+  describe('getTvDetails', () => {
     it('应该能获取电视剧详情', async () => {
       if (skipIfNoApiKey('tmdb')) return;
 
-      const result = await tmdbService.getDetails(1399, 'tv');
+      const result = await tmdbService.getTvDetails(1399);
 
       expect(result.data).toBeDefined();
       expect(result.data).toHaveProperty('name');
       expect(result.data).toHaveProperty('first_air_date');
       expect(result.data.id).toBe(1399);
     }, 10000);
-
-    it('详情请求也应该使用缓存', async () => {
-      if (skipIfNoApiKey('tmdb')) return;
-
-      const result1 = await tmdbService.getDetails(27205, 'movie');
-      expect(result1.meta.cached).toBeFalsy();
-
-      const result2 = await tmdbService.getDetails(27205, 'movie');
-      expect(result2.meta.cached).toBeTruthy();
-    }, 15000);
   });
 
   describe('错误处理', () => {
@@ -115,7 +139,7 @@ describe('TmdbService', () => {
       const originalKey = CONFIG.tmdb.apiKey;
       CONFIG.update('tmdb', { apiKey: '' });
 
-      const result = await tmdbService.search('test', '', null);
+      const result = await tmdbService.searchMovie('test');
 
       expect(result.meta.error).toBeDefined();
       expect(result.data).toEqual([]);
