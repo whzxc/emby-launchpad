@@ -44,14 +44,14 @@ export class EmbyService extends ApiClient {
     super('Emby');
   }
 
-  async checkExistence(tmdbId: number): Promise<ApiResponse<EmbyItem | null>> {
+  async checkExistence(tmdbId: number): Promise<ApiResponse<EmbyItem | undefined>> {
     const { server, apiKey } = CONFIG.emby as { server: string; apiKey: string };
 
     if (!server || !apiKey) {
       Utils.log('[Emby] Server or API Key not configured');
       return {
-        data: null,
-        meta: { error: 'Emby not configured', source: this.name, timestamp: new Date().toISOString() }
+        data: undefined,
+        meta: { error: 'Emby not configured', source: this.name, timestamp: new Date().toISOString() },
       };
     }
 
@@ -60,13 +60,13 @@ export class EmbyService extends ApiClient {
       Recursive: 'true',
       AnyProviderIdEquals: queryId,
       Fields: 'ProviderIds,MediaSources,MediaStreams,ProductionYear,ChildCount,RecursiveItemCount,Path,IndexNumber',
-      api_key: apiKey
+      api_key: apiKey,
     });
 
     const url = `${server}/emby/Items?${params.toString()}`;
     const cacheKey = this.buildCacheKey('check', tmdbId);
 
-    const result = await this.request<EmbyItem | null>({
+    const result = await this.request<EmbyItem | undefined>({
       requestFn: async () => {
         Utils.log(`[Emby] Checking TMDB ID: ${tmdbId}`);
 
@@ -82,7 +82,7 @@ export class EmbyService extends ApiClient {
                 ParentId: item.Id,
                 IncludeItemTypes: 'Season',
                 Fields: 'ChildCount,RecursiveItemCount,Path,IndexNumber',
-                api_key: apiKey
+                api_key: apiKey,
               });
               const seasonUrl = `${server}/emby/Items?${seasonParams.toString()}`;
               const seasonData = await Utils.getJSON(seasonUrl);
@@ -100,7 +100,7 @@ export class EmbyService extends ApiClient {
                     IncludeItemTypes: 'Episode',
                     Recursive: 'true',
                     Fields: 'ParentIndexNumber', // Need season number
-                    api_key: apiKey
+                    api_key: apiKey,
                   });
                   const allEpUrl = `${server}/emby/Items?${episodeParams.toString()}`;
                   const allEpData = await Utils.getJSON(allEpUrl);
@@ -138,13 +138,13 @@ export class EmbyService extends ApiClient {
         }
 
         Utils.log('[Emby] Not found in Emby');
-        return null;
+        return undefined;
       },
       cacheKey,
       cacheTTL: 1440, // 24 hours
       useCache: true,
       useQueue: true,
-      priority: 3
+      priority: 3,
     });
 
     if (result.meta) {
@@ -154,15 +154,15 @@ export class EmbyService extends ApiClient {
     return result;
   }
 
-  protected determineTTL(data: any, defaultTTL: number): number {
-    return data ? defaultTTL : 60;
-  }
-
   getWebUrl(item: EmbyItem | null): string {
     if (!item) return '';
 
     const { server } = CONFIG.emby as { server: string };
     return `${server}/web/index.html#!/item?id=${item.Id}&serverId=${item.ServerId || ''}`;
+  }
+
+  protected determineTTL(data: any, defaultTTL: number): number {
+    return data ? defaultTTL : 60;
   }
 }
 

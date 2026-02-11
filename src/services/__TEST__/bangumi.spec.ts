@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { bangumiService } from './bangumi';
-import { CONFIG } from '../core/api-config';
-import { skipIfNoApiKey } from '../test/helpers/api-test-helpers';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { bangumiService } from '../bangumi';
+import { CONFIG } from '../../core/api-config';
+import { skipIfNoApiKey } from '../../test/helpers/api-test-helpers';
 
 describe('BangumiService', () => {
   beforeEach(() => {

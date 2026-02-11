@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { RequestQueue } from './request-queue';
-import { sleep } from '../test/helpers/api-test-helpers';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { RequestQueue } from '../request-queue';
+import { sleep } from '../../test/helpers/api-test-helpers';
 
 describe('RequestQueue', () => {
   let queue: RequestQueue;
@@ -22,7 +22,7 @@ describe('RequestQueue', () => {
       const results = await Promise.all([
         queue.enqueue(async () => 'result1'),
         queue.enqueue(async () => 'result2'),
-        queue.enqueue(async () => 'result3')
+        queue.enqueue(async () => 'result3'),
       ]);
 
       expect(results).toEqual(['result1', 'result2', 'result3']);
@@ -39,7 +39,7 @@ describe('RequestQueue', () => {
           await sleep(100);
           concurrent--;
           return 'done';
-        })
+        }),
       );
 
       await Promise.all(requests);
@@ -57,7 +57,7 @@ describe('RequestQueue', () => {
           await sleep(100);
           return 'result';
         },
-        { key: 'same-key' }
+        { key: 'same-key' },
       );
 
       const request2 = queue.enqueue(
@@ -66,7 +66,7 @@ describe('RequestQueue', () => {
           await sleep(100);
           return 'result';
         },
-        { key: 'same-key' }
+        { key: 'same-key' },
       );
 
       const [result1, result2] = await Promise.all([request1, request2]);
@@ -79,13 +79,19 @@ describe('RequestQueue', () => {
       let callCount = 0;
 
       const request1 = queue.enqueue(
-        async () => { callCount++; return 'result1'; },
-        { key: 'key1' }
+        async () => {
+          callCount++;
+          return 'result1';
+        },
+        { key: 'key1' },
       );
 
       const request2 = queue.enqueue(
-        async () => { callCount++; return 'result2'; },
-        { key: 'key2' }
+        async () => {
+          callCount++;
+          return 'result2';
+        },
+        { key: 'key2' },
       );
 
       await Promise.all([request1, request2]);
@@ -106,7 +112,7 @@ describe('RequestQueue', () => {
               resolve(id);
             });
           }),
-          { priority: 0 }
+          { priority: 0 },
         );
       };
 
@@ -114,13 +120,19 @@ describe('RequestQueue', () => {
       const blocker2 = createBlocker('blocker2');
 
       const low = queue.enqueue(
-        async () => { executionOrder.push('low'); return 'low'; },
-        { priority: 1 }
+        async () => {
+          executionOrder.push('low');
+          return 'low';
+        },
+        { priority: 1 },
       );
 
       const high = queue.enqueue(
-        async () => { executionOrder.push('high'); return 'high'; },
-        { priority: 10 }
+        async () => {
+          executionOrder.push('high');
+          return 'high';
+        },
+        { priority: 10 },
       );
 
       resolvers.forEach(r => r());
@@ -143,7 +155,7 @@ describe('RequestQueue', () => {
       await expect(
         queue.enqueue(async () => {
           throw new Error(errorMessage);
-        })
+        }),
       ).rejects.toThrow(errorMessage);
     });
 

@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { CacheManager } from './cache-manager';
-import { sleep } from '../test/helpers/api-test-helpers';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { CacheManager } from '../cache-manager';
+import { sleep } from '../../test/helpers/api-test-helpers';
 
 describe('CacheManager', () => {
   let cache: CacheManager;
@@ -24,7 +24,7 @@ describe('CacheManager', () => {
         number: 123,
         boolean: true,
         array: [1, 2, 3],
-        object: { nested: 'value' }
+        object: { nested: 'value' },
       };
 
       cache.set('string', testData.string);

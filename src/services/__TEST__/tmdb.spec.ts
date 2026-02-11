@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { tmdbService } from './tmdb';
-import { CONFIG } from '../core/api-config';
-import { skipIfNoApiKey, sleep } from '../test/helpers/api-test-helpers';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { tmdbService } from '../tmdb';
+import { CONFIG } from '../../core/api-config';
+import { skipIfNoApiKey } from '../../test/helpers/api-test-helpers';
 
 // Polyfill GM for testing environment
 if (typeof (globalThis as any).GM === 'undefined') {
@@ -15,7 +15,7 @@ if (typeof (globalThis as any).GM === 'undefined') {
         console.error('Fetch error:', error);
         return { response: { results: [] } }; // Fallback
       }
-    }
+    },
   };
 }
 
@@ -37,7 +37,7 @@ describe('TmdbService', () => {
       expect(result.data.length).toBeGreaterThan(0);
 
       const firstResult = result.data[0];
-      // Movie type doesn't have media_type property in the search/movie response usually, 
+      // Movie type doesn't have media_type property in the search/movie response usually,
       // but let's check for title which is specific to movies
       expect(firstResult.title).toBeTruthy();
     }, 10000);

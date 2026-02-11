@@ -1,12 +1,10 @@
 import { Utils } from './utils';
 import { CONFIG } from './core/api-config';
-import { SettingsHandler, CacheHandler } from './handlers/settings';
+import { CacheHandler, SettingsHandler } from './handlers/settings';
 import { GYGHandler, GYGListHandler } from './handlers/gyg';
-import { DoubanSubjectHandler } from './handlers/douban/subject';
-import { DoubanListHandler } from './handlers/douban/list';
 import { DmhyListHandler } from './handlers/dmhy';
 import { addStyle } from '@/utils/style';
-
+import { DoubanHandler } from '@/handlers/douban';
 
 (function () {
   'use strict';
@@ -29,13 +27,7 @@ import { addStyle } from '@/utils/style';
     const isList = /(explore|tv|chart|subject_collection)/.test(location.href);
     Utils.log(`Detection: isSubject=${isSubject}, isList=${isList}`);
 
-    let handler;
-    if (isSubject) {
-      Utils.log('Creating DoubanSubjectHandler');
-      handler = new DoubanSubjectHandler();
-    } else if (isList) {
-      handler = new DoubanListHandler();
-    }
+    const handler = new DoubanHandler();
 
     if (handler) {
       if (document.readyState === 'loading') {

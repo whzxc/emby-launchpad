@@ -12,17 +12,16 @@ export const Utils = {
         },
         onerror(response: any) {
           reject(response);
-        }
+        },
       });
     });
   },
 
   async getJSON(url: string): Promise<any> {
-    Utils.log(`fetching ${url}`);
     const resp = await this.request({
       method: 'GET',
       url: url,
-      headers: { 'Accept': 'application/json' }
+      headers: { 'Accept': 'application/json' },
     });
     return JSON.parse(resp.responseText);
   },
@@ -30,7 +29,7 @@ export const Utils = {
   async getDoc(url: string): Promise<Document> {
     const resp = await this.request({
       method: 'GET',
-      url: url
+      url: url,
     });
     return (new DOMParser()).parseFromString(resp.responseText, 'text/html');
   },
@@ -46,7 +45,7 @@ export const Utils = {
 
   log(...args: any[]): void {
     console.log('[Unified-Script]', ...args);
-  }
+  },
 };
 
 export { cache as Cache } from '../core/cache-manager';

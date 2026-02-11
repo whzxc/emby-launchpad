@@ -1,7 +1,7 @@
 import { Utils } from '@/utils';
 import { UI } from '@/utils/ui';
 import { CONFIG } from '@/core/api-config';
-import { TmdbSearchResult, tmdbService } from '@/services/tmdb';
+import { tmdbService } from '@/services/tmdb';
 import { embyService } from '@/services/emby';
 import { BaseMediaHandler } from './base-handler';
 
@@ -35,7 +35,9 @@ export class GYGHandler extends BaseMediaHandler {
 
   async render(title: string, year: string, wrapper: HTMLElement): Promise<void> {
     wrapper.innerHTML = '<div class="gyg-card" style="text-align:center; color:#999; font-size:12px;">Searching TMDB...</div>';
-    const results = await tmdbService.search(title, year);
+    // GYG primarily seems to be for movies based on usage, or we default to movie.
+    // If we want to support TV, we'd need to detect it. For now, defaulting to searchMovie as per previous default behaviors.
+    const results = await tmdbService.searchMovie(title, year);
 
     if (results.data.length === 0) {
       wrapper.innerHTML = '<div class="gyg-card"><div style="font-size:12px; color:#999; text-align:center;">No TMDB Data</div></div>';
@@ -45,12 +47,14 @@ export class GYGHandler extends BaseMediaHandler {
     this.renderCard(results.data[0], wrapper, results.data);
   }
 
-  renderCard(item: TmdbSearchResult, wrapper: HTMLElement, allResults: TmdbSearchResult[]): void {
+  renderCard(item: any, wrapper: HTMLElement, allResults: any[]): void {
     const title = item.title || item.name || '';
     const date = item.release_date || item.first_air_date || '????';
     const yearStr = date.split('-')[0];
     const score = item.vote_average ? item.vote_average.toFixed(1) : '0.0';
-    const tmdbUrl = `https://www.themoviedb.org/${item.media_type}/${item.id}`;
+    // We searched for movie, so media_type is movie
+    const mediaType = 'movie';
+    const tmdbUrl = `https://www.themoviedb.org/${mediaType}/${item.id}`;
     const copyText = `${title} (${yearStr})`;
 
     let selectorHtml = '';
@@ -186,15 +190,17 @@ export class GYGListHandler extends BaseMediaHandler {
     const seasonRegex = /(?:[\s:：(（\[【]|^)(?:第[0-9一二三四五六七八九十]+季|Season\s*\d+|S\d+).*/i;
 
     const yearParam = year;
+    let mediaType: 'movie' | 'tv' = 'movie';
     if (seasonRegex.test(rawTitle)) {
       cleanTitle = rawTitle.replace(seasonRegex, '').trim();
+      mediaType = 'tv';
     }
 
     const dot = UI.createDot({ posterContainer: imgDiv, titleElement: titleEl });
     dot.title = `Checking ${cleanTitle}...`;
 
     try {
-      const result = await this.checkMedia(cleanTitle, yearParam, null, rawTitle);
+      const result = await this.checkMedia(cleanTitle, yearParam, mediaType, rawTitle);
       this.updateDotStatus(dot, result, cleanTitle, [cleanTitle]);
     } catch (e) {
       this.handleError(dot, e, cleanTitle, this.logger);

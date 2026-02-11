@@ -1,6 +1,8 @@
 import { CONFIG } from '@/core/api-config';
 import { EmbyItem } from '@/services/emby';
 import { Nullbr115Item, NullbrMagnetItem, nullbrService } from '@/services/nullbr';
+import { TmdbInfo } from '@/handlers/base-handler';
+import { MediaType } from '@/types/tmdb';
 
 interface DotOptions {
   posterContainer?: HTMLElement;
@@ -134,7 +136,7 @@ export const UI = {
             </div>
         </div>
         `;
-    
+
     document.body.appendChild(overlay);
   },
 
@@ -143,7 +145,7 @@ export const UI = {
     logs: LogEntry[],
     embyItem: EmbyItem | null = null,
     searchQueries: string[] = [],
-    tmdbInfo?: { id: number; mediaType: 'movie' | 'tv' },
+    tmdbInfo?: TmdbInfo,
   ): void {
     const id = 'us-detail-modal';
     const existing = document.getElementById(id);
@@ -409,7 +411,7 @@ export const UI = {
     }
   },
 
-  async loadNullbrResources(tmdbId: number, mediaType: 'movie' | 'tv'): Promise<void> {
+  async loadNullbrResources(tmdbId: number, mediaType: MediaType): Promise<void> {
     const loadingEl = document.getElementById('us-nullbr-loading');
     const contentEl = document.getElementById('us-nullbr-content');
 

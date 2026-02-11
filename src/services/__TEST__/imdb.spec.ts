@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { imdbService } from './imdb';
+import { describe, expect, it } from 'vitest';
+import { imdbService } from '../imdb';
 
 describe('ImdbService', () => {
   describe('getRating', () => {

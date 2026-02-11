@@ -1,8 +1,9 @@
 import { Utils } from '@/utils';
 import { UI } from '@/utils/ui';
 import { imdbService } from '@/services/imdb';
-import { BaseMediaHandler } from '../base-handler';
+import { BaseMediaHandler } from './base-handler';
 import { hasSeasonInfo, removeSeasonInfo } from '@/utils/title-parser';
+import { MediaType } from '@/types/tmdb';
 
 interface ListStrategy {
   name: string;
@@ -10,7 +11,7 @@ interface ListStrategy {
   titleSelector: string;
   yearSelector: string;
   getYear: (el: Element | null) => string;
-  getType: (card: Element) => 'tv' | 'movie' | null;
+  getType: (card: Element) => MediaType;
   getCover: (card: Element) => Element | null | undefined;
 }
 
@@ -36,7 +37,7 @@ export class DoubanHandler extends BaseMediaHandler {
         getType: (card) => {
           if (card.classList.contains('tv')) return 'tv';
           if (card.classList.contains('movie')) return 'movie';
-          return null;
+          return 'movie';
         },
         getCover: (card) => card.querySelector('.drc-subject-cover') || card.querySelector('img')?.parentElement,
       },
@@ -69,7 +70,7 @@ export class DoubanHandler extends BaseMediaHandler {
             if (parent.classList.contains('movie')) return 'movie';
             parent = parent.parentElement;
           }
-          return null;
+          return 'movie';
         },
         getCover: (card) => card.querySelector('.frc-subject-cover') || card.querySelector('img')?.parentElement,
       },
@@ -113,7 +114,7 @@ export class DoubanHandler extends BaseMediaHandler {
     dot.title = `Checking ${title}...`;
 
     try {
-      const result = await this.checkMedia(title, year, null, title);
+      const result = await this.checkMedia(title, year, 'movie', title);
       this.updateDotStatus(dot, result, title, [title]);
     } catch (e) {
       this.handleError(dot, e, title, this.logger);
@@ -256,7 +257,7 @@ export class DoubanHandler extends BaseMediaHandler {
 
     let cleanTitle = rawTitle;
     let useYear = strategy.getYear(yearEl);
-    const mediaType = strategy.getType ? strategy.getType(card) : null;
+    const mediaType = strategy.getType ? strategy.getType(card) : 'movie';
 
     if (hasSeasonInfo(rawTitle)) {
       cleanTitle = removeSeasonInfo(rawTitle);

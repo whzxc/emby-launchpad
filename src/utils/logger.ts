@@ -1,5 +1,9 @@
-
-import { LogEntry } from '@/types/common';
+export interface LogEntry {
+  time: string;
+  step: string;
+  data: unknown;
+  status?: string;
+}
 
 export class ProcessLogger {
   private logs: LogEntry[] = [];
@@ -9,21 +13,18 @@ export class ProcessLogger {
       time: new Date().toLocaleTimeString(),
       step,
       data,
-      status
+      status,
     });
   }
 
   logApiRequest(apiName: string, meta: any, response: any): void {
-    this.log(`【请求API: ${apiName}】`, {
-      meta,
-      response
-    });
+    this.log(`【请求API: ${apiName}】`, { meta, response });
   }
 
   logError(error: any): void {
     this.log('【错误】', {
       message: error?.message || String(error),
-      stack: error?.stack
+      stack: error?.stack,
     }, 'error');
   }
 

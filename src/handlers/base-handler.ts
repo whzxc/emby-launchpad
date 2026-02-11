@@ -1,14 +1,18 @@
-
 import { UI } from '@/utils/ui';
 import { tmdbService } from '@/services/tmdb';
 import { EmbyItem, embyService } from '@/services/emby';
 import { ProcessLogger } from '@/utils/logger';
-import { MediaType, TmdbInfo } from '@/types/common';
+import { MediaType } from '@/types/tmdb';
+
+export interface TmdbInfo {
+  id: number;
+  mediaType: MediaType;
+}
 
 export interface MediaCheckResult {
   found: boolean;
-  embyItem: EmbyItem | null;
-  tmdbInfo: TmdbInfo | null;
+  embyItem?: EmbyItem;
+  tmdbInfo?: TmdbInfo;
   logger: ProcessLogger;
 }
 
@@ -22,7 +26,7 @@ export abstract class BaseMediaHandler {
   protected async checkMedia(
     title: string,
     year: string = '',
-    mediaType: MediaType | null = null,
+    mediaType: MediaType = 'movie',
     originalTitle?: string,
   ): Promise<MediaCheckResult> {
     const logger = new ProcessLogger();
@@ -35,26 +39,30 @@ export abstract class BaseMediaHandler {
     });
 
     try {
-      const tmdbResult = await tmdbService.search(title, year, mediaType);
-      logger.logApiRequest('TMDB', tmdbResult.meta, {
-        count: tmdbResult.data.length,
-        top_result: tmdbResult.data[0] || null,
-      });
+      let tmdbResult;
+      let results: any[] = [];
 
-      if (tmdbResult.data.length === 0) {
-        logger.log('【请求API: Emby】', { message: 'Skipped (No TMDB Result)' });
-        return {
-          found: false,
-          embyItem: null,
-          tmdbInfo: null,
-          logger,
-        };
+      if (mediaType === 'tv') {
+        tmdbResult = await tmdbService.searchTv(title, year);
+        results = tmdbResult.data;
+      } else {
+        tmdbResult = await tmdbService.searchMovie(title, year);
+        results = tmdbResult.data;
       }
 
-      const bestMatch = tmdbResult.data[0];
+      logger.logApiRequest('TMDB', tmdbResult.meta, {
+        count: results.length,
+        top_result: results[0] || null,
+      });
+
+      if (results.length === 0) {
+        return { found: false, logger };
+      }
+
+      const bestMatch = results[0];
       const tmdbInfo: TmdbInfo = {
         id: bestMatch.id,
-        mediaType: bestMatch.media_type,
+        mediaType: mediaType,
       };
 
       const embyResult = await embyService.checkExistence(bestMatch.id);
@@ -75,8 +83,6 @@ export abstract class BaseMediaHandler {
       logger.logError(error);
       return {
         found: false,
-        embyItem: null,
-        tmdbInfo: null,
         logger,
       };
     }
@@ -103,7 +109,7 @@ export abstract class BaseMediaHandler {
           result.logger.getLogs(),
           result.embyItem,
           queries,
-          result.tmdbInfo || undefined,
+          result.tmdbInfo,
         );
       };
     } else {
@@ -117,7 +123,7 @@ export abstract class BaseMediaHandler {
           result.logger.getLogs(),
           null,
           queries,
-          result.tmdbInfo || undefined,
+          result.tmdbInfo,
         );
       };
     }

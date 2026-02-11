@@ -1,7 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { embyService } from '../emby';
-import { CONFIG } from '../../core/api-config';
-import { Utils } from '../../utils';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { embyService } from './emby';
+import { CONFIG } from '../core/api-config';
+import { Utils } from '../utils';
 
 describe('EmbyService', () => {
   beforeEach(() => {
@@ -19,9 +19,9 @@ describe('EmbyService', () => {
               {
                 Id: 'item1',
                 Name: 'Test Movie',
-                Type: 'Movie',
-              },
-            ],
+                Type: 'Movie'
+              }
+            ]
           };
         }
         return { Items: [] };
@@ -59,8 +59,8 @@ describe('EmbyService', () => {
             Items: [{
               Id: 'series1',
               Name: 'Test Series',
-              Type: 'Series',
-            }],
+              Type: 'Series'
+            }]
           };
         }
         if (url.includes('ParentId=series1') && url.includes('IncludeItemTypes=Season')) {
@@ -68,8 +68,8 @@ describe('EmbyService', () => {
             Items: [{
               Id: 'season1',
               Name: 'Season 1',
-              RecursiveItemCount: 10,
-            }],
+              RecursiveItemCount: 10
+            }]
           };
         }
         return { Items: [] };

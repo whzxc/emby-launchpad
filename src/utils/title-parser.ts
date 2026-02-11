@@ -1,6 +1,3 @@
-
-import { ParsedTitle } from '@/types/common';
-
 export const SEASON_REGEX = /(?:[\s:：(（\[【]|^)(?:第[0-9一二三四五六七八九十]+季|Season\s*\d+|S\d+).*/i;
 
 export function removeSeasonInfo(title: string): string {
@@ -16,6 +13,16 @@ export function cleanTitle(title: string): string {
     .replace(/[【】\[\]()（）]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+export interface ParsedTitle {
+  title: string;
+  group?: string;
+  resolution?: string;
+  subtitle?: string;
+  format?: string;
+  season?: string;
+  episode?: string;
 }
 
 export function parseDmhyTitle(raw: string): ParsedTitle {
@@ -59,7 +66,8 @@ export function parseDmhyTitle(raw: string): ParsedTitle {
   });
 
   const scoreStr = (str: string): number => {
-    let s = 0; if (!str) return -999;
+    let s = 0;
+    if (!str) return -999;
     const lower = str.toLowerCase();
     if (/[\u4e00-\u9fa5]/.test(str)) s += 15;
     if (str.includes('/')) s += 5;
@@ -83,7 +91,10 @@ export function parseDmhyTitle(raw: string): ParsedTitle {
   blocks.forEach(b => {
     const content = b.slice(1, -1);
     const score = scoreStr(content);
-    if (score > maxScore) { maxScore = score; bestStr = content; }
+    if (score > maxScore) {
+      maxScore = score;
+      bestStr = content;
+    }
   });
   title = bestStr;
 
@@ -112,6 +123,6 @@ export function parseDmhyTitle(raw: string): ParsedTitle {
     group: group.trim(),
     resolution: res.trim(),
     subtitle: sub.trim(),
-    format: fmt.trim()
+    format: fmt.trim(),
   };
 }

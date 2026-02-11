@@ -1,6 +1,7 @@
 import { ApiClient, ApiResponse } from '@/core/api-client';
 import { CONFIG } from '@/core/api-config';
 import { Utils } from '@/utils';
+import { MediaType } from '@/types/tmdb';
 
 export interface Nullbr115Item {
   title: string;
@@ -51,7 +52,7 @@ class NullbrService extends ApiClient {
     return !!(CONFIG.nullbr.appId && CONFIG.nullbr.apiKey);
   }
 
-  async get115Resources(tmdbId: number, mediaType: 'movie' | 'tv'): Promise<ApiResponse<Nullbr115Item[]>> {
+  async get115Resources(tmdbId: number, mediaType: MediaType): Promise<ApiResponse<Nullbr115Item[]>> {
     if (!this.isConfigured()) {
       return {
         data: [],
@@ -92,7 +93,7 @@ class NullbrService extends ApiClient {
     });
   }
 
-  async getMagnetResources(tmdbId: number, mediaType: 'movie' | 'tv', seasonNumber?: number): Promise<ApiResponse<NullbrMagnetItem[]>> {
+  async getMagnetResources(tmdbId: number, mediaType: MediaType, seasonNumber?: number): Promise<ApiResponse<NullbrMagnetItem[]>> {
     if (!this.isConfigured()) {
       return {
         data: [],
@@ -142,7 +143,7 @@ class NullbrService extends ApiClient {
     });
   }
 
-  async getAllResources(tmdbId: number, mediaType: 'movie' | 'tv'): Promise<NullbrResources> {
+  async getAllResources(tmdbId: number, mediaType: MediaType): Promise<NullbrResources> {
     const [res115, resMagnet] = await Promise.all([
       this.get115Resources(tmdbId, mediaType),
       this.getMagnetResources(tmdbId, mediaType),

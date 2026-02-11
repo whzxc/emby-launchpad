@@ -4,7 +4,7 @@ import { CONFIG } from '@/core/api-config';
 import { bangumiService } from '@/services/bangumi';
 import { BaseMediaHandler } from './base-handler';
 import { parseDmhyTitle } from '@/utils/title-parser';
-import { MediaType } from '@/types/common';
+import { MediaType } from '@/types/tmdb';
 
 export class DmhyListHandler extends BaseMediaHandler {
   init(): void {

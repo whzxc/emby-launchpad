@@ -1,7 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { nullbrService } from './nullbr';
-import { CONFIG } from '../core/api-config';
-import { Utils } from '../utils';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { nullbrService } from '../nullbr';
+import { CONFIG } from '../../core/api-config';
 
 describe('NullbrService', () => {
   beforeEach(() => {
@@ -17,15 +16,15 @@ describe('NullbrService', () => {
           {
             title: 'Test Movie',
             size: '1GB',
-            share_link: 'http://115.com/s/...'
-          }
-        ]
+            share_link: 'http://115.com/s/...',
+          },
+        ],
       };
 
       (global as any).GM_xmlhttpRequest = vi.fn((options) => {
         options.onload({
           status: 200,
-          responseText: JSON.stringify(mockResponse)
+          responseText: JSON.stringify(mockResponse),
         });
       });
 
@@ -40,7 +39,7 @@ describe('NullbrService', () => {
       (global as any).GM_xmlhttpRequest = vi.fn((options) => {
         options.onload({
           status: 404,
-          responseText: '{}'
+          responseText: '{}',
         });
       });
 
@@ -57,15 +56,15 @@ describe('NullbrService', () => {
           {
             name: 'Test Magnet',
             size: '2GB',
-            magnet: 'magnet:?xt=urn:btih:...'
-          }
-        ]
+            magnet: 'magnet:?xt=urn:btih:...',
+          },
+        ],
       };
 
       (global as any).GM_xmlhttpRequest = vi.fn((options) => {
         options.onload({
           status: 200,
-          responseText: JSON.stringify(mockResponse)
+          responseText: JSON.stringify(mockResponse),
         });
       });
 
