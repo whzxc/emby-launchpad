@@ -61,7 +61,7 @@ const SUBTITLE_KEYWORDS_BLOCK = [
   '简日内封', '繁日内封', '粵日雙語', '粵日國三語',
   '内封繁体中文字幕', '内封繁體中文字幕',
   '外挂繁體中文', '外挂简中字幕', '外掛繁體中文',
-  '简中字幕', '繁中字幕',
+  '简中字幕', '繁中字幕', '英文字幕',
   'CHS', 'CHT', 'BIG5', 'GB',
 ];
 const SUBTITLE_BLOCK_RE = new RegExp(`(?:${SUBTITLE_KEYWORDS_BLOCK.map(escapeRegex).join('|')})`, 'gi');
@@ -72,8 +72,8 @@ const EPISODE_RE = /(?:\s-\s*(\d{2,3})-(\d{2,3})(?:\s*(?:Fin|END|完))?\b|\s-\s*
 // Common group names for validation
 const KNOWN_GROUP_PREFIXES = [
   'LoliHouse', 'ANi', 'VCB-Studio', 'SweetSub', 'GMTeam', 'GM-Team',
-  '桜都字幕组', '樱都字幕组', '幻樱字幕组', '幻櫻字幕組',
-  '百冬练习组', '百冬練習組', '绿茶字幕组', '綠茶字幕組',
+  '桜都字幕组', '樱都字幕组', '幻樱字幕组', '幻櫻字幕組', '喵萌奶茶屋',
+  '百冬练习组', '百冬練習組', '绿茶字幕组', '綠茶字幕組', '冷番补完字幕组',
   '萝莉社活动室', '六四位元字幕組',
   '沸班亚马制作组', 'jibaketa',
   '整理搬运',

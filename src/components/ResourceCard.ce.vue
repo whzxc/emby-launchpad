@@ -1,6 +1,6 @@
-<script setup lang="ts">
-import { ref, computed } from 'vue';
-import { nullbrService, type Nullbr115Item, type NullbrMagnetItem } from '@/services/api/nullbr';
+<script lang="ts" setup>
+import { computed, ref } from 'vue';
+import { type Nullbr115Item, type NullbrMagnetItem, nullbrService } from '@/services/api/nullbr';
 import type { TmdbInfo } from '@/types/ui';
 
 const props = defineProps<{
@@ -24,11 +24,15 @@ async function copyMagnet(magnet: string, event: Event) {
   try {
     await navigator.clipboard.writeText(magnet);
     btn.textContent = '已复制';
-    setTimeout(() => { btn.textContent = '复制'; }, 1500);
+    setTimeout(() => {
+      btn.textContent = '复制';
+    }, 1500);
   } catch {
-    GM_setClipboard(magnet);
+    GM.setClipboard(magnet);
     btn.textContent = '已复制';
-    setTimeout(() => { btn.textContent = '复制'; }, 1500);
+    setTimeout(() => {
+      btn.textContent = '复制';
+    }, 1500);
   }
 }
 
@@ -76,7 +80,7 @@ loadNullbrResources();
         <div class="us-resource-list">
           <div v-for="item in nullbrItems115.slice(0, 5)" :key="item.share_link" class="us-resource-item">
             <div class="us-resource-info">
-              <div class="us-resource-title" :title="item.title">{{ item.title }}</div>
+              <div :title="item.title" class="us-resource-title">{{ item.title }}</div>
               <div class="us-resource-meta">
                 <span>{{ item.size }}</span>
                 <span v-if="item.resolution" class="us-resource-tag">{{ item.resolution }}</span>
@@ -85,7 +89,7 @@ loadNullbrResources();
               </div>
             </div>
             <div class="us-resource-actions">
-              <a :href="item.share_link" target="_blank" class="us-resource-btn primary">打开链接</a>
+              <a :href="item.share_link" class="us-resource-btn primary" target="_blank">打开链接</a>
             </div>
           </div>
         </div>
@@ -97,7 +101,7 @@ loadNullbrResources();
         <div class="us-resource-list">
           <div v-for="item in nullbrMagnets.slice(0, 5)" :key="item.magnet" class="us-resource-item">
             <div class="us-resource-info">
-              <div class="us-resource-title" :title="item.name">{{ item.name }}</div>
+              <div :title="item.name" class="us-resource-title">{{ item.name }}</div>
               <div class="us-resource-meta">
                 <span>{{ item.size }}</span>
                 <span v-if="item.resolution" class="us-resource-tag">{{ item.resolution }}</span>
@@ -117,16 +121,14 @@ loadNullbrResources();
 
   <!-- Search Actions -->
   <div v-if="uniqueQueries.length" class="us-actions">
-    <div v-if="!tmdbInfo" class="us-status-text">Not Found in Library</div>
+    <a v-if="!tmdbInfo" :href="`https://www.themoviedb.org/search?query=${encodeURIComponent(uniqueQueries[0])}`" class="us-status-text">
+      Not Found in TMDB
+    </a>
     <div class="us-actions-links">
-      <a v-if="uniqueQueries[0]" :href="`https://www.gyg.si/s/1---1/${encodeURIComponent(uniqueQueries[0])}`"
-        target="_blank" class="us-btn us-btn-search">Search GYG</a>
-      <a v-if="uniqueQueries[0]"
-        :href="`https://bt4gprx.com/search?orderby=size&p=1&q=${encodeURIComponent(uniqueQueries[0])}`" target="_blank"
-        class="us-btn us-btn-search">Search BT4G</a>
-      <a v-if="uniqueQueries[0]"
-        :href="`https://dmhy.org/topics/list?keyword=${encodeURIComponent(uniqueQueries[0])}&sort_id=2&team_id=0&order=date-desc`"
-        target="_blank" class="us-btn us-btn-search">DMHY 搜全集</a>
+      <a :href="`https://www.gyg.si/s/1---1/${encodeURIComponent(uniqueQueries[0])}`" class="us-btn us-btn-search" target="_blank">GYG</a>
+      <a :href="`https://bt4gprx.com/search?orderby=size&p=1&q=${encodeURIComponent(uniqueQueries[0])}`" class="us-btn us-btn-search" target="_blank">BT4G</a>
+      <a :href="`https://dmhy.org/topics/list?keyword=${encodeURIComponent(uniqueQueries[0])}&sort_id=2&team_id=0&order=date-desc`" class="us-btn us-btn-search" target="_blank">DMHY</a>
+      <a :href="`https://dmhy.org/topics/list?keyword=${encodeURIComponent(uniqueQueries[0])}&sort_id=31&team_id=0&order=date-desc`" class="us-btn us-btn-search" target="_blank">DMHY 全集</a>
     </div>
   </div>
 </template>

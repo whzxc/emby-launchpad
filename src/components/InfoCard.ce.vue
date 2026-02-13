@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { computed } from 'vue';
 import type { EmbyItem } from '@/types/emby';
 import type { TmdbInfo } from '@/types/ui';
@@ -71,7 +71,7 @@ function onOverlayClick(e: MouseEvent) {
         <TmdbCard v-if="!hasEmby" :results="tmdbResults || []" :title="title" />
 
         <!-- Nullbr Resources + Search Actions (always visible) -->
-        <ResourceCard :tmdb-info="effectiveTmdbInfo" :search-queries="searchQueries" />
+        <ResourceCard :search-queries="searchQueries" :tmdb-info="effectiveTmdbInfo" />
       </div>
 
       <!-- Footer -->

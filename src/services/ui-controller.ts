@@ -61,7 +61,7 @@ class UIController {
     const handler = (event: Event) => {
       event.preventDefault();
       event.stopPropagation();
-      this.showInfoCard(result);
+      this.showModal(result);
     };
 
     dotEl.addEventListener('dotClick', handler);
@@ -71,7 +71,7 @@ class UIController {
   /**
    * Show the InfoCard modal with the given media check result.
    */
-  showInfoCard(result: MediaCheckResult): void {
+  showModal(result: MediaCheckResult): void {
     // Remove existing info card
     const existing = document.querySelector('us-info-card');
     if (existing) existing.remove();

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { computed, ref } from 'vue';
 import type { EmbyItem } from '@/types/emby';
 import { CONFIG } from '@/services/config';
@@ -94,8 +94,7 @@ const subtitleInfo = computed(() => {
   <div class="us-emby-section">
     <!-- Emby switcher (for multi-result) -->
     <div v-if="items && items.length > 1" class="us-emby-switcher">
-      <select class="us-emby-select" :value="selectedIndex"
-        @change="selectedIndex = Number(($event.target as HTMLSelectElement).value)">
+      <select :value="selectedIndex" class="us-emby-select" @change="selectedIndex = Number(($event.target as HTMLSelectElement).value)">
         <option v-for="(it, idx) in items" :key="it.Id" :value="idx">
           {{ it.Name }} ({{ it.ProductionYear || '' }}) - {{ it.Type }}
         </option>
@@ -118,8 +117,7 @@ const subtitleInfo = computed(() => {
         <!-- Series seasons -->
         <div v-if="current.Type === 'Series' && current.Seasons?.length" class="us-season-badges">
           <span v-for="s in current.Seasons" :key="s.Id" class="us-season-badge">
-            {{ s.Name.replace('Season', 'S').replace('Specials', 'SP') }}: {{ s.ChildCount || s.RecursiveItemCount || 0
-            }}集
+            {{ s.Name.replace('Season', 'S').replace('Specials', 'SP') }}: {{ s.ChildCount || s.RecursiveItemCount || 0 }}集
           </span>
         </div>
         <div v-else-if="current.Type === 'Series'" class="us-series-count">
@@ -134,7 +132,7 @@ const subtitleInfo = computed(() => {
         <div v-if="subtitleInfo" class="us-stream-info">{{ subtitleInfo }}</div>
 
         <div class="us-emby-action">
-          <a :href="webUrl" target="_blank" class="us-btn us-btn-primary">▶ Play on Emby</a>
+          <a :href="webUrl" class="us-btn us-btn-primary" target="_blank">▶ Play on Emby</a>
         </div>
       </div>
     </div>
